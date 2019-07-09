@@ -10,7 +10,7 @@ public:
 
 	virtual ~Acceptor() = default;
 
-	void run(); //acceptor loop
+	void Run() override;  //acceptor loop
 			
 
 protected:

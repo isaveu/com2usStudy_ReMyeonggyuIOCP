@@ -115,7 +115,7 @@ void Acceptor::logmsg(char * format,...)
 	}
 }
 
-void Acceptor::run()
+void Acceptor::Run()
 {
 	SOCKET remoteClientSocket = INVALID_SOCKET;
 	SOCKADDR_IN addr;
