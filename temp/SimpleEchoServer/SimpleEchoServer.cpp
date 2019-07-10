@@ -12,9 +12,11 @@
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	// 해당 변수에 C4100 warning을 발생시키지 않음
 	UNREFERENCED_PARAMETER(argc);
 	UNREFERENCED_PARAMETER(argv);
 
+	// winsock.dll 로드용
 	WSADATA wsaData;
 	WORD wVer = MAKEWORD(2,2);    
 	if (WSAStartup(wVer,&wsaData) != NO_ERROR)
@@ -27,7 +29,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	MGServerReceiver Receiver;
-	AsynchIOService MGServer(&Receiver, 1024, 5, "MGServer");
+	AsynchIOService MGServer(&Receiver, 1024, 1, "MGServer");
 
 	AsynchSocket* pProtoType = AsynchSocket::GetASPrototype();
 	Acceptor MGAcceptor(&MGServer, pProtoType, "127.0.0.1", 23452);
@@ -37,7 +39,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	while(1)
 	{
 		Sleep(1000);
-		Receiver.Process();
+		//Receiver.Process();
 	}
 
 	WSACleanup();

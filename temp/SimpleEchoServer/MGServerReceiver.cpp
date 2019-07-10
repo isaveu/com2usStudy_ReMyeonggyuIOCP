@@ -33,7 +33,7 @@ void MGServerReceiver::notifyMessage(ASSOCKDESCEX& sockdesc, size_t length, char
 	else
 		sockdesc.psender->postingSend(sockdesc, length, pbuffer);
 
-	delete pbuffer;
+	delete [] pbuffer;
 }
 
 void MGServerReceiver::Process()

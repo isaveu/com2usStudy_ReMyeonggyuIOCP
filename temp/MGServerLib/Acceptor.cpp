@@ -107,6 +107,7 @@ void Acceptor::logmsg(char * format,...)
 
 	FILE * f = fopen(szpath,"at");
 	
+	fwrite(szbuff, strlen(szbuff), 1, stdout);
 	if(f)
 	{
 		fwrite(szbuff,strlen(szbuff),1,f);		
@@ -115,14 +116,14 @@ void Acceptor::logmsg(char * format,...)
 	}
 }
 
-void Acceptor::run()
+void Acceptor::Run()
 {
 	SOCKET remoteClientSocket = INVALID_SOCKET;
 	SOCKADDR_IN addr;
 
 	int len = sizeof(addr);
 
-	logmsg("acceptor thread started %d thread\n", ::GetCurrentThreadId());
+	logmsg("acceptor thread started %d thread\n", GetCurrentThreadId());
 	
 	while(IsStart())
 	{		
@@ -138,7 +139,7 @@ void Acceptor::run()
 			
 		}
 
-		logmsg(" accepted %d.%d.%d.%d \n" , addr.sin_addr.S_un.S_un_b.s_b1, addr.sin_addr.S_un.S_un_b.s_b2, addr.sin_addr.S_un.S_un_b.s_b3, addr.sin_addr.S_un.S_un_b.s_b4);			
+		logmsg(" accepted %d.%d.%d.%d \n" , addr.sin_addr.S_un.S_un_b.s_b1, addr.sin_addr.S_un.S_un_b.s_b2, addr.sin_addr.S_un.S_un_b.s_b3, addr.sin_addr.S_un.S_un_b.s_b4);
 
 		theAsynchEventManager->registerSocket(remoteClientSocket, m_prototype, addr);		
 	

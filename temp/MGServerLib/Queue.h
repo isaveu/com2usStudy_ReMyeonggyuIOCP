@@ -1,5 +1,7 @@
 #pragma once
 
+// TODO: cuncurrent_queue ∑Œ ¥Î√º
+
 #include <queue>
 #include "Synchronized.h"
 

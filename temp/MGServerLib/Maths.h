@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <deque>
 
+// TODO:사용 할 시 cuncurrent_queue 멀티 쓰레드에 safe한 큐 -> 
+// 초기부터 사용할 unique index를 미리 할당해놓고 필요할 때마다 사용, 반환
 class ULONG_PTRGenerator
 {
 public:

@@ -1,5 +1,7 @@
 #pragma once
 
+// TODO: std thread ∑Œ ¥Î√º
+
 #include <windows.h>
 
 class Thread;

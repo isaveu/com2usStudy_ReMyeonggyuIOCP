@@ -42,7 +42,7 @@ void AsynchIOService::logmsg(char * format,...)
 	sprintf(szpath,"./asio/%s_[%s].txt", this->name, szdate);
 
 	FILE * f = fopen(szpath,"at");
-	
+	fwrite(szbuff, strlen(szbuff), 1, stdout);
 	if(f)
 	{
 		fwrite(szbuff,strlen(szbuff),1,f);		
@@ -115,6 +115,8 @@ DWORD AsynchIOService::stop()
 	return 0;
 }
 
+// TODO: IOFrame 미리 선점
+// send, recv용 op 나누기 -> send는 락 필요
 OverlappedOperation* AsynchIOService::retrieveIOFrame()
 {
 	Synchronized es(&ioFrameSynch);
@@ -157,6 +159,7 @@ void AsynchIOService::Run(Thread* info)
 		lpoverlapped = NULL;
 
 		// infinit로 웨이트 시키지 말자. 쓰레드 종료처리가 모호해진다.
+		// TODO: GQCSEX 변환 (최대 개수 지정,)
 		retVal = GetQueuedCompletionStatus(iocpHandle, &bytesTransfer, &keyValue, &lpoverlapped, waittime);
 
 		error = GetLastError();
@@ -186,6 +189,7 @@ void AsynchIOService::Run(Thread* info)
 
 void AsynchIOService::dispatchError(DWORD error, DWORD bytesTransfer, LPOVERLAPPED lpoverlapped, ULONG_PTR keyValue)
 {
+	logmsg("dispatchError\n");
 	// dont enter for reason, wait_timeout...
 	OverlappedOperation* op = NULL;
 	if(lpoverlapped) op = (OverlappedOperation*)lpoverlapped;
@@ -245,6 +249,7 @@ void AsynchIOService::dispatchCompletion(DWORD bytesTransfer, LPOVERLAPPED lpove
 	{
 	case OverlappedOperation::eOpType_Connect:
 		{
+			logmsg("dispatchCompletion Connect\n");
 			// ConnectEx를 통해 수행되어진 소켓은 ConnectEx를 실제로 완료하고 난후 해당 처리를 수행해야만
 			// 다른 버클리 소켓 함수의 서비스를 받을 수 있다.
 			int err = setsockopt(socket->getSOCKET(), SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0 );
@@ -269,7 +274,7 @@ void AsynchIOService::dispatchCompletion(DWORD bytesTransfer, LPOVERLAPPED lpove
 
 	case OverlappedOperation::eOpType_Read:
 		{		
-			
+			logmsg("dispatchCompletion Read\n");
 			if(bytesTransfer)
 			{				
 				int rt = -1;
@@ -306,6 +311,7 @@ void AsynchIOService::dispatchCompletion(DWORD bytesTransfer, LPOVERLAPPED lpove
 
 	case OverlappedOperation::eOpType_Write:
 		{
+			logmsg("dispatchCompletion Write\n");
 			releaseSocket(socket, 0);
 			releaseIOFrame(op);
 		}
@@ -321,7 +327,7 @@ void AsynchIOService::dispatchCompletion(DWORD bytesTransfer, LPOVERLAPPED lpove
 
 DWORD AsynchIOService::postingRead(AsynchSocket* socket, OverlappedOperation* op)
 {
-	
+	logmsg("postingRead\n");
 	if(NULL == socket || NULL == op)
 	{
 		if(socket) releaseSocket(socket, 5);
@@ -360,7 +366,7 @@ DWORD AsynchIOService::postingRead(AsynchSocket* socket, OverlappedOperation* op
 
 DWORD AsynchIOService::postingSend(ASSOCKDESC& sockdesc, size_t length, char* data)
 {
-	
+	logmsg("postingSend\n");
 	if( 0>= length || ioMaxSize < length ) return WSAEMSGSIZE;
 
 	//synch along entire method
@@ -437,6 +443,7 @@ DWORD AsynchIOService::postingSend(ASSOCKDESC& sockdesc, size_t length, char* da
 
 void AsynchIOService::releaseSocket(AsynchSocket* socket, DWORD why)
 {
+	logmsg("releaseSocket\n");
 	Synchronized es(&entireSynch);
 
 	ASSOCKDESCEX closedDesc;	
@@ -476,6 +483,7 @@ DWORD AsynchIOService::disconnectSocket(ULONG_PTR uniqueId, LARGE_INTEGER* tick)
 
 DWORD AsynchIOService::disconnectSocket(ASSOCKDESC& sockdesc)
 {		
+	logmsg("disconnectSocket\n");
 	Synchronized es(&entireSynch);
 
 	AsynchSocket* as = 0;	
@@ -503,6 +511,7 @@ DWORD AsynchIOService::disconnectSocket(ASSOCKDESC& sockdesc)
 
 DWORD AsynchIOService::connectSocket(INT32 reqeusterID, AsynchSocket* prototype, char* ip, u_short port)
 {
+	logmsg("connectSocket\n");
 	//synch along entire method
 	Synchronized es(&entireSynch);
 
@@ -606,6 +615,7 @@ DWORD AsynchIOService::releaseSocketUniqueId(ULONG_PTR socketUniqueId )
 
 DWORD AsynchIOService::registerSocket(SOCKET sockid, AsynchSocket* prototype, SOCKADDR_IN& addrin)
 {
+	logmsg("registerSocket\n");
 	volatile bool bSuccess = false;
 	ASSOCKDESCEX desc;
 	{
@@ -668,7 +678,7 @@ DWORD AsynchIOService::registerSocket(SOCKET sockid, AsynchSocket* prototype, SO
 		// posting read [by reference counter mechanism]
 		//	increase ref counter, and call postRead
 		//	why? ref counter is read(1), write(1)
-		 //LONG ref = as->enterIO();
+		LONG ref = as->enterIO();
 
 		//logmsg("first read\n");
 

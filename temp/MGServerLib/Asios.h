@@ -68,6 +68,8 @@ struct ASSOCKDESC
 	}
 };
 
+
+// TOOD: 상속 -> 통합
 class INetworkSender;
 class INetworkReceiver;
 struct ASSOCKDESCEX : public ASSOCKDESC
@@ -83,7 +85,7 @@ struct ASSOCKDESCEX : public ASSOCKDESC
 	}
 };
 
-
+// TODO: Manager 역할
 class AsynchSocket
 {
 private:
