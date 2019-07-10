@@ -668,7 +668,7 @@ DWORD AsynchIOService::registerSocket(SOCKET sockid, AsynchSocket* prototype, SO
 		// posting read [by reference counter mechanism]
 		//	increase ref counter, and call postRead
 		//	why? ref counter is read(1), write(1)
-		 //LONG ref = as->enterIO();
+		auto ref = as->enterIO();
 
 		//logmsg("first read\n");
 
