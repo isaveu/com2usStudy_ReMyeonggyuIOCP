@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <windows.h>
 
 template<size_t SIZE>
 class DataBufferT
