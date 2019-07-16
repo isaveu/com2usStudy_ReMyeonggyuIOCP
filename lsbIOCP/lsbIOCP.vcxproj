@@ -97,7 +97,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -145,18 +145,26 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Acceptor.h" />
-    <ClInclude Include="AIOException.h" />
-    <ClInclude Include="IServerReceiver.h" />
-    <ClInclude Include="IServerController.h" />
-    <ClInclude Include="IOCPServerNet.h" />
+    <ClInclude Include="AsyncIOException.h" />
+    <ClInclude Include="AsyncIOServer.h" />
+    <ClInclude Include="Controller.h" />
+    <ClInclude Include="IServer.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="Session.h" />
+    <ClInclude Include="Struct.h" />
     <ClInclude Include="Thread.h" />
+    <ClInclude Include="Utils.h" />
+    <ClInclude Include="Worker.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Acceptor.cpp" />
-    <ClCompile Include="IOCPServerNet.cpp" />
+    <ClCompile Include="AsyncIOException.cpp" />
+    <ClCompile Include="AsyncIOServer.cpp" />
+    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Thread.cpp" />
+    <ClCompile Include="Utils.cpp" />
+    <ClCompile Include="Worker.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

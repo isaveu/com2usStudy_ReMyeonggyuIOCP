@@ -155,11 +155,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="echoServer.cpp" />
+    <ClCompile Include="lsbReceiver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\lsbIOCP\lsbIOCP.vcxproj">
       <Project>{c4319b70-024b-4081-9966-6c4c8e1d0727}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="lsbReceiver.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
