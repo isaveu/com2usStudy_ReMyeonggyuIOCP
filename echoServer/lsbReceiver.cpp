@@ -1,26 +1,26 @@
 #include "lsbReceiver.h"
 
-void lsbReceiver::notifyClientConnected() const
+void lsbReceiver::NotifyClientConnected() const
 {
 
 }
 
-void lsbReceiver::notifyClientDisconnected() const
+void lsbReceiver::NotifyClientDisconnected() const
 {
 
 }
 
-void lsbReceiver::notifyMessage() const
+void lsbReceiver::NotifyMessage() const
 {
 
 }
 
-void lsbReceiver::notifyServerConnectingResult() const
+void lsbReceiver::NotifyServerConnectingResult() const
 {
 
 }
 
-void lsbReceiver::notifyServerDisconnect() const
+void lsbReceiver::NotifyServerDisconnect() const
 {
 
 }

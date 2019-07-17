@@ -36,16 +36,13 @@
     <ClInclude Include="Worker.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Session.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Struct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Controller.h">
+    <ClInclude Include="AsyncIOException.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="AsyncIOException.h">
+    <ClInclude Include="SessionManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
@@ -65,13 +62,16 @@
     <ClCompile Include="AsyncIOException.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Controller.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="AsyncIOServer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Worker.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AsyncIOServerController.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

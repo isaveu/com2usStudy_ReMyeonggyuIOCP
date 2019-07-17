@@ -78,6 +78,7 @@ void Log::Write(std::string msg, LOG_LEVEL logLevel)
 
 void Log::FlushToFile(std::string& fileName, std::string& filePath, std::string& logMsg)
 {
+	// TODO: remove file lock, add fileopen, msg write lock
 	// Manage mutex variables to map by file name (except for date in file name)
 	std::mutex* ioMutex;
 	auto res = m_Lock.insert({ fileName, nullptr });
@@ -103,6 +104,6 @@ void Log::FlushToFile(std::string& fileName, std::string& filePath, std::string&
 	}
 	else 
 	{ 
-		std::cout << logMsg; 
+		std::cout << logMsg << std::endl; 
 	}
 }

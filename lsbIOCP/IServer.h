@@ -1,16 +1,12 @@
 #pragma once
 
-#include <windows.h>
-
-#include "AsyncIOServer.h"
+#include "Struct.h"
 
 class IServerController {
 public:
-	virtual DWORD postRecv() = 0;
 	virtual DWORD postSend() = 0;
 	virtual DWORD disconnectSocket() = 0;
 	virtual DWORD connectSocket() = 0;
-	virtual DWORD registerSokcet() = 0;
 };
 
 class IServerReceiver {
@@ -31,7 +27,4 @@ public:
 
 	// 외부 서버 소켓 연결해제 통보
 	virtual void NotifyServerDisconnect() const = 0;
-
-	// Get session map information
-	virtual sessionMap GetSessionMap() const = 0;
 };
