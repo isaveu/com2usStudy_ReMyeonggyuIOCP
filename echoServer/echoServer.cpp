@@ -3,7 +3,6 @@
 #include "lsbReceiver.h"
 
 void test() {
-
 }
 
 int main()
@@ -23,11 +22,13 @@ int main()
 	AsyncIOServer lsbServer(&receiver, ioMaxBufferSize, threadNumber, sessionNumber, serverName);
 
 	// Apply acceptor to your server
-	Acceptor server(&lsbServer, ip, port);
+	Acceptor acceptor(&lsbServer, ip, port);
 
-	//server.Start();
+	lsbServer.Start();
+	acceptor.Start();
 
-	//server.Join();
+	acceptor.Join();
+	lsbServer.Join();
 
 	return 0;
 }

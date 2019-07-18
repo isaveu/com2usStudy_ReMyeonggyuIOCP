@@ -147,6 +147,7 @@
     <ClInclude Include="Acceptor.h" />
     <ClInclude Include="AsyncIOException.h" />
     <ClInclude Include="AsyncIOServer.h" />
+    <ClInclude Include="Exception.h" />
     <ClInclude Include="IServer.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="SessionManager.h" />

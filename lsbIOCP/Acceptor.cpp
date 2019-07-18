@@ -48,13 +48,17 @@ void Acceptor::Accept()
 			continue;
 		}
 
-		m_Log->Write(utils::Format("Accepted %u.%u.%u.%u",
+		m_Log->Write(utils::Format("Accepted %u.%u.%u.%u, socket %d",
 			addr.sin_addr.S_un.S_un_b.s_b1,
 			addr.sin_addr.S_un.S_un_b.s_b2,
 			addr.sin_addr.S_un.S_un_b.s_b3,
-			addr.sin_addr.S_un.S_un_b.s_b4));
+			addr.sin_addr.S_un.S_un_b.s_b4, clientSocket));
 
-		m_pServer->registerSocket(clientSocket);
+		if (m_pServer->RegisterSession(clientSocket) != NULL)
+		{
+			::closesocket(clientSocket);
+			m_Log->Write(utils::Format("Fail add session, socket %d", clientSocket), LOG_LEVEL::ERR);
+		}
 	}
 }
 

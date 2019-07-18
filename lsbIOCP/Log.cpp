@@ -55,6 +55,8 @@ LOG_LEVEL Log::GetCurrentLogLevel()
  *		- 하지만 백그라운드 작업에서 로그를 얼마나 자주 쓰게하고 얼마나 쉬게 해야 하는지 고민
  * 추가로.. 파일 I/O 전후로 락을 거는 것이 옳은 행동인가..
  */
+
+// TODO: change parameter type to ref
 void Log::Write(std::string msg) { Log::Write(msg, LOG_LEVEL::INFO); }
 void Log::Write(std::string msg, LOG_LEVEL logLevel)
 {

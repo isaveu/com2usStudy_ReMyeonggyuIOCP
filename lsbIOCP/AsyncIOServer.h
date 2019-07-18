@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <unordered_map>
+#include <functional>
 
 #include "Log.h"
 #include "Utils.h"
@@ -19,14 +19,17 @@ public:
 	~AsyncIOServer();
 	void Start();
 	void Stop();
+	void Join();
 
-	void registerSocket(SOCKET clientSocket);
-	void postRecv(SESSION* session);
+	DWORD RegisterSession(SOCKET clientSocket);
+	DWORD ReleaseSession(size_t sessionId, DWORD error);
+	DWORD PostRecv(SESSION* session);
+	DWORD PostSend(SESSION* session, size_t length, char* data);
 
 	// IServerController
-	DWORD postSend() override;
-	DWORD disconnectSocket() override;
-	DWORD connectSocket() override;
+	DWORD SendPacket(SESSIONDESC& sessionDesc, size_t length, char* data) override;
+	DWORD ConnectSocket(size_t requestId, std::string ip, u_short port) override;
+	DWORD DisconnectSocket(SESSIONDESC& sessionDesc) override;
 
 private:
 	IServerReceiver*	m_pReceiver;
@@ -42,5 +45,5 @@ private:
 	std::string		m_ServerName;
 	Log*			m_Log;
 
-	SessionManager*		m_pSessinManager;
+	SessionManager*		m_pSessionManager;
 };
