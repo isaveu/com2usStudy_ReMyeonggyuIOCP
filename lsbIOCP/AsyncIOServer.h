@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Ws2tcpip.h>
+
 #include <vector>
 #include <functional>
 
@@ -21,14 +23,16 @@ public:
 	void Stop();
 	void Join();
 
-	DWORD RegisterSession(SOCKET clientSocket);
-	DWORD ReleaseSession(size_t sessionId, DWORD error);
+	LPSESSION LinkSocketToSession(SOCKET clientSocket);
+	DWORD UnlinkSocketToSession(INT sessionId, DWORD error);
+	DWORD RegisterClient(SOCKET clientSocket);
+
 	DWORD PostRecv(SESSION* session);
 	DWORD PostSend(SESSION* session, size_t length, char* data);
 
 	// IServerController
 	DWORD SendPacket(SESSIONDESC& sessionDesc, size_t length, char* data) override;
-	DWORD ConnectSocket(size_t requestId, std::string ip, u_short port) override;
+	DWORD ConnectSocket(size_t requestId, const char* ip, u_short port) override;
 	DWORD DisconnectSocket(SESSIONDESC& sessionDesc) override;
 
 private:

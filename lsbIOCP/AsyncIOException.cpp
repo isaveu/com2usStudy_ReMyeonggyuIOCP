@@ -1,5 +1,6 @@
 #include "AsyncIOException.h"
 
+// String formatter function (simillar with printf parameters)
 std::string FormatErrorMessage(DWORD error, const std::string& msg)
 {
 	static const auto BUFFERLENGTH = 1024;

@@ -27,10 +27,18 @@ private:
 	void Accept();
 
 private:
+	// Server to process from client socket
 	AsyncIOServer*	m_pServer;
+	
+	// Server listen socket
 	SOCKET			m_listenSocket;
+	
 	const char*		m_ip;
 	const u_short	m_port;
-	static bool		m_ws2_32_lib;
+	
+	// Declared to load winsock.dll only once in run-time
+	static bool		m_winsock_dll;
+
+	// Logger (singleton)
 	Log*			m_Log;
 };

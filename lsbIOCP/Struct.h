@@ -47,8 +47,7 @@ public:
 	bool CheckTick(_SESSIONDESC& desc) const { return this->tick.QuadPart == desc.tick.QuadPart; }
 
 public:
-	short			id;
-	std::string		ip;
+	INT				id;
 	LARGE_INTEGER	tick;
 	IServerController* pController;
 } SESSIONDESC, *LPSESSIONDESC;
@@ -73,6 +72,7 @@ public:
 	SOCKET GetSocket() const { return m_SocketId; }
 	void SetController(IServerController* pController) { m_SessionDesc.pController = pController; }
 	void SetSessionId(size_t id) { m_SessionDesc.id = static_cast<short>(id); }
+	size_t GetSessionId() { return m_SessionDesc.id; }
 	void InitOverlapped(OP_TYPE type) 
 	{ 
 		switch (type)
@@ -97,24 +97,22 @@ public:
 
 	SESSIONDESC& GetSessionDescRef() { return m_SessionDesc; }
 
-	void OpenSocket(SOCKET socket) { m_SocketId = socket; m_IsOpened.store(true); }
-	void CloseSocket()
-	{
-		if (m_SocketId == INVALID_SOCKET) return;
-		::closesocket(m_SocketId);
-		m_IsOpened.store(false);
-		m_SocketId = INVALID_SOCKET;
+	void SetSocket(SOCKET socket) { m_SocketId = socket; }
+	bool Open()
+	{ 
+		bool open = false;
+		return m_IsOpened.compare_exchange_strong(open, true);
+	}
+	bool Close() 
+	{ 
+		bool open = true;
+		return m_IsOpened.compare_exchange_strong(open, false);
 	}
 
 	void EnterIO() { m_RefCount++; }
 	void ExitIO() { m_RefCount--; }
 
 	bool IsOpened() { return m_IsOpened.load(); }
-	bool IsPossibleClose()
-	{ 
-		bool open = true; 
-		return m_IsOpened.compare_exchange_strong(open, false);
-	}
 
 private:
 	SESSIONDESC			m_SessionDesc;

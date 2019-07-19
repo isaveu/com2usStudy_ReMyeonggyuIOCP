@@ -4,15 +4,18 @@
 
 class lsbReceiver : public IServerReceiver
 {
-	// 클라이언트 소켓 연결 통보
+	// Server can manipulate this function
+	// So, when the event occurs, we can handle the logic.
+
+	// Triggered when client socket is connected
 	void NotifyClientConnected(SESSIONDESC& sessionDesc) const override;
 
-	// 클라이언트 소켓 연결해제 통보
+	// Triggered when socket is disconnected
 	void NotifyClientDisconnected(short sessionId) const override;
 
-	// 메시지 수신 통보
+	// Triggered when server get message from client
 	void NotifyMessage(SESSIONDESC& sessionDesc, size_t bytesNumber, char* data) const override;
 
-	// 외부 서버 소켓 연결 요청 결과 통보
-	void NotifyServerConnectingResult(SESSIONDESC& session, size_t requrestId, DWORD error) const override;
+	// Triggered when the job of connecting to other server is completed
+	void NotifyServerConnectingResult(SESSIONDESC& session, INT requrestId, DWORD error) const override;
 };

@@ -21,7 +21,7 @@ Log::Log()
 	ChangeLogLevel(LOG_LEVEL::INFO);
 }
 
-void Log::Init(LOG_LEVEL logLevel, std::string fileName)
+void Log::Init(LOG_LEVEL logLevel, std::string& fileName)
 {
 	m_FileName = fileName;
 	ChangeLogLevel(logLevel);
@@ -30,11 +30,11 @@ void Log::Init(LOG_LEVEL logLevel, std::string fileName)
 	// https://yonmy.com/archives/9
 	// performance of string key map
 	// http://veblush.blogspot.com/2012/10/map-vs-unorderedmap-for-string-key.html
-	auto res = Log::m_Lock.insert({ fileName, nullptr });
+	/*auto res = Log::m_Lock.insert({ fileName, nullptr });
 	if (res.INSERT_SUCCESS)
 	{ 
 		res.MAP_ITER->MUTEX_PTR = new std::mutex();
-	}
+	}*/
 }
 
 void Log::ChangeLogLevel(LOG_LEVEL logLevel)
@@ -82,7 +82,7 @@ void Log::FlushToFile(std::string& fileName, std::string& filePath, std::string&
 {
 	// TODO: remove file lock, add fileopen, msg write lock
 	// Manage mutex variables to map by file name (except for date in file name)
-	std::mutex* ioMutex;
+	/*std::mutex* ioMutex;
 	auto res = m_Lock.insert({ fileName, nullptr });
 	if (res.INSERT_SUCCESS)
 	{
@@ -92,11 +92,11 @@ void Log::FlushToFile(std::string& fileName, std::string& filePath, std::string&
 	else
 	{ 
 		ioMutex = res.MAP_ITER->MUTEX_PTR; 
-	}
+	}*/
 
 	// Is iofstream thread safe ?
 	// https://stackoverflow.com/questions/20211935/is-ofstream-thread-safe
-	std::lock_guard<std::mutex> lock(*ioMutex);
+	std::lock_guard<std::mutex> lock(m_Lock);
 
 	// Fail if there dosen't exist dir in path
 	std::ofstream out(filePath, std::ios_base::out | std::ios_base::app);

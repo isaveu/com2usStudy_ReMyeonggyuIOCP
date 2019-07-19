@@ -10,6 +10,8 @@
 #include "Utils.h"
 #include "Thread.h"
 
+// For avoid cross reference of header "AsyncIOServer.h"
+// #include is declared in .cpp file
 class AsyncIOServer;
 
 class Worker : public Thread

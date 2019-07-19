@@ -23,7 +23,10 @@ void lsbReceiver::NotifyMessage(SESSIONDESC& sessionDesc, size_t bytesNumber, ch
 	delete[] pbuffer;
 }
 
-void lsbReceiver::NotifyServerConnectingResult(SESSIONDESC& session, size_t requestId, DWORD error) const
+void lsbReceiver::NotifyServerConnectingResult(SESSIONDESC& sessionDesc, INT requestId, DWORD error) const
 {
-	
+	if (error != FALSE)
+		printf("connecting fail, error %d\n", error);
+	else
+		printf("connecting successfully session id : %d, req Id : %d\n", sessionDesc.id, requestId);
 }

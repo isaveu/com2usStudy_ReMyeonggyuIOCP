@@ -9,8 +9,10 @@ Worker::Worker(IServerReceiver* pReceiver, HANDLE iocpHandle, SessionManager* pS
 	, m_pServer(pServer)
 	, m_Log(Log::GetInstance()) {}
 
+// Handle all of completed IOCP queue jobs from GQCSEX
 void Worker::HandleCompletion()
 {
+	// To consider thead stop, set wait time not INFINITY
 	constexpr DWORD		waitTime = 500;
 	constexpr ULONG		maxRemoveCount = 2;
 	constexpr BOOL		alertable = FALSE;
@@ -19,6 +21,7 @@ void Worker::HandleCompletion()
 
 	while (this->IsStart())
 	{
+		// Get completed IO jobs
 		auto res = ::GetQueuedCompletionStatusEx(
 			m_IOCPHandle,
 			completionPortEntries,
@@ -27,6 +30,7 @@ void Worker::HandleCompletion()
 			waitTime,
 			alertable);
 
+		// Process completed job
 		for (ULONG i = 0; i < removedNumber; i++)
 		{
 			auto nBytes = completionPortEntries[i].dwNumberOfBytesTransferred;
@@ -45,17 +49,21 @@ void Worker::HandleCompletion()
 	}
 }
 
+// Process IO job having error
 void Worker::DispatchError(DWORD error, DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, ULONG_PTR id)
 {
 	if (error == WAIT_TIMEOUT) return;
 
+	m_Log->Write(utils::Format("[Error %u] Dispatch Error", error), LOG_LEVEL::DEBUG);
+
 	auto overlappedEx = reinterpret_cast<LPOVERLAPPED_EX>(lpOverlapped);
 	if (overlappedEx == nullptr)
 	{
-		// TODO: logging
+		m_Log->Write(utils::Format("[Error %u] overlapped is null", error), LOG_LEVEL::ERR);
 		return;
 	}
 
+	// If connectEx job, notify to server that connect job is fail
 	if (overlappedEx->type == OP_TYPE::CONN)
 	{
 		// ref
@@ -64,55 +72,79 @@ void Worker::DispatchError(DWORD error, DWORD transferredBytesNumber, LPOVERLAPP
 		auto reqId = overlappedEx->requesterId;
 		auto sessionDesc = m_pSessionManager->GetSessionDescRef(id);
 		m_pReceiver->NotifyServerConnectingResult(sessionDesc, reqId, error);
+		m_Log->Write("Can not connect to server", LOG_LEVEL::ERR);
 	}
 
-	m_pServer->ReleaseSession(id, error);
+	// This connection has problem, so disconnect
+	m_pServer->UnlinkSocketToSession(id, error);
 }
 
-void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, ULONG_PTR id)
+// Process completed IO job
+void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, ULONG_PTR sessionId)
 {
 	auto overlappedEx = reinterpret_cast<LPOVERLAPPED_EX>(lpOverlapped);
-	auto session = m_pSessionManager->GetSessionPtr(id);
+	auto session = m_pSessionManager->GetSessionPtr(sessionId);
 
 	// already socket disconnected
-	if (session->IsOpened() == false) return;
+	if (session->IsOpened() == false)
+	{
+		m_Log->Write("Already disconnected connection", LOG_LEVEL::DEBUG);
+		return;
+	}
 
-	auto reqId = overlappedEx->requesterId;
 	auto sessionDesc = session->GetSessionDescRef();
 
 	switch (overlappedEx->type)
 	{
+		// Job for ConnectEx
+		// Notify to server the result
 	case OP_TYPE::CONN:
-		if (setsockopt(session->GetSocket(), SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0) != NULL)
+		// Sokcet connected by ConnectEx() can receive packet after calling setsockopt()
+		// So, session is opend after setsockopt()
+		if (setsockopt(session->GetSocket(), SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0) != FALSE)
 		{ 
 			auto lastError = ::GetLastError();
-			m_pReceiver->NotifyServerConnectingResult(sessionDesc, reqId, lastError);
-			m_pServer->ReleaseSession(id, lastError);
+			m_pReceiver->NotifyServerConnectingResult(sessionDesc, overlappedEx->requesterId, lastError);
+			m_pServer->UnlinkSocketToSession(sessionId, lastError);
 		}
 		else
 		{
-			m_pReceiver->NotifyServerConnectingResult(sessionDesc, reqId, NULL);
-			m_pServer->PostRecv(session);
+			// If job goes smoothly, post WSARecv
+			m_pReceiver->NotifyServerConnectingResult(sessionDesc, overlappedEx->requesterId, NULL);
+			auto error = m_pServer->PostRecv(session);
+			if (error != FALSE)
+			{
+				m_Log->Write(utils::Format("[Error %u] PostRecv failed", error), LOG_LEVEL::ERR);
+				m_pServer->UnlinkSocketToSession(sessionId, error);
+				return;
+			}
+			session->Open();
 		}
 		break;
 
+		// Receive job
 	case OP_TYPE::RECV:
 		if (transferredBytesNumber == 0)
 		{
-			m_pServer->ReleaseSession(id, 0);
+			// If get zero bytes, disconnect
+			m_pServer->UnlinkSocketToSession(sessionId, NULL);
 		}
 		else
 		{
+			// If got messages, notify to server
 			m_pReceiver->NotifyMessage(sessionDesc, transferredBytesNumber, overlappedEx->wsabuf.buf);
+
+			// And post WSARecv again
 			m_pServer->PostRecv(session);
 		}
 		break;
 
+		// Send message job
 	case OP_TYPE::SEND:
 		break;
 
 	default:
-		// TODO: logging critical error
+		m_Log->Write("Overlapped has no type", LOG_LEVEL::ERR);
 		break;
 	}
 

@@ -1,11 +1,13 @@
 #include "Acceptor.h"
 
-bool Acceptor::m_ws2_32_lib = false;
+bool Acceptor::m_winsock_dll = false;
 
+// Constructor of Acceptor
 Acceptor::Acceptor(AsyncIOServer* pServer, const char* ip, const u_short port) 
 	: m_pServer(pServer), m_ip(ip), m_port(port), m_Log(Log::GetInstance())
 {
-	if (m_ws2_32_lib == false)
+	// Load winsock.dll
+	if (m_winsock_dll == false)
 	{
 		WSADATA wsaData;
 		WORD wVer = MAKEWORD(2, 2);
@@ -16,6 +18,8 @@ Acceptor::Acceptor(AsyncIOServer* pServer, const char* ip, const u_short port)
 			ThrowErrorIf(true, WSANOTINITIALISED, "[WSAStartup()] WSA version not matched");
 		}
 	}
+
+	// Make listen socket
 	m_listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	ThrowLastErrorIf(m_listenSocket == INVALID_SOCKET, "[socket()] socket dosen't created");
 
@@ -23,15 +27,19 @@ Acceptor::Acceptor(AsyncIOServer* pServer, const char* ip, const u_short port)
 	sin.sin_port = htons(port);
 	inet_pton(sin.sin_family = AF_INET, ip, &sin.sin_addr);
 
-	auto res = bind(m_listenSocket, (LPSOCKADDR)& sin, sizeof(sin));
-	ThrowLastErrorIf(res == SOCKET_ERROR, "[bind()] Fail bind");
+	// Bind listen socket to available port
+	auto res = bind(m_listenSocket, reinterpret_cast<LPSOCKADDR>(&sin), sizeof(sin));
+	ThrowErrorIf(res == SOCKET_ERROR, WSAGetLastError(), "[bind()] Fail bind");
 
+	// Make listen wait queue
 	res = listen(m_listenSocket, 128);
-	ThrowLastErrorIf(res == SOCKET_ERROR, "[listen()] Fail listen");
+	ThrowErrorIf(res == SOCKET_ERROR, WSAGetLastError(), "[listen()] Fail listen");
 	
 	m_Log->Write(utils::Format("[%s, %d] accept started\n", ip, port));
 }
 
+// Accept client socket
+// Acceptor thread run this function
 void Acceptor::Accept()
 {
 	SOCKET clientSocket = INVALID_SOCKET;
@@ -40,6 +48,8 @@ void Acceptor::Accept()
 
 	while (this->IsStart())
 	{
+		// TODO: change accept to AcceptEx
+		// Wait until accept socket from client
 		clientSocket = accept(m_listenSocket, reinterpret_cast<LPSOCKADDR>(&addr), &len);
 
 		if (clientSocket == INVALID_SOCKET)
@@ -54,14 +64,21 @@ void Acceptor::Accept()
 			addr.sin_addr.S_un.S_un_b.s_b3,
 			addr.sin_addr.S_un.S_un_b.s_b4, clientSocket));
 
-		if (m_pServer->RegisterSession(clientSocket) != NULL)
+		// If server accept socket from client,
+		// register this socket to available session from server's session pool
+		auto error = m_pServer->RegisterClient(clientSocket);
+
+		// If fail to register client socket to session, close client socket
+		// This client socket can not recv, send packet anymore
+		if (error != FALSE)
 		{
-			::closesocket(clientSocket);
-			m_Log->Write(utils::Format("Fail add session, socket %d", clientSocket), LOG_LEVEL::ERR);
+			closesocket(clientSocket);
+			m_Log->Write(utils::Format("[Error %u] Fail client register", error), LOG_LEVEL::ERR);
 		}
 	}
 }
 
+// For thread function
 void Acceptor::Run()
 {
 	Acceptor::Accept();

@@ -4,6 +4,7 @@
 #include <atomic>
 #include <vector>
 
+#include "Log.h"
 #include "Struct.h"
 #include "IServer.h"
 
@@ -13,17 +14,17 @@ public:
 	SessionManager() = delete;
 	SessionManager(size_t sessionNum, size_t ioMaxBufSize, IServerController* pController);
 
-	bool retrieveId(size_t& _out_sessionId);
-	void returnId(size_t sessionId);
+	bool retrieveId(INT& _out_sessionId);
+	void returnId(INT sessionId);
 
-	SESSIONDESC& GetSessionDescRef(size_t sessionId);
-	LPSESSION GetSessionPtr(size_t sessionId);
+	SESSIONDESC& GetSessionDescRef(INT sessionId);
+	LPSESSION GetSessionPtr(INT sessionId);
 
 public:
 	static size_t	SESSION_MAX_NUMBER;
 
 private:
-	using cqueue = Concurrency::concurrent_queue<size_t>;
+	using cqueue = Concurrency::concurrent_queue<INT>;
 
 	size_t			m_SessionNumber;
 	cqueue			m_SessionIdPool;
