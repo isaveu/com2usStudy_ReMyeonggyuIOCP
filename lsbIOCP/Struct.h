@@ -18,6 +18,10 @@ public:
 		Init();
 		if (0 < maxLength) wsabuf.buf = new char[maxLength];
 	}
+	~_OVERLAPPED_EX()
+	{
+		if (0 < maxLength) delete[] wsabuf.buf;
+	}
 
 	void Init()
 	{
@@ -67,6 +71,12 @@ public:
 		m_pOverlappedConn = new OVERLAPPED_EX(0);
 		m_RefCount.store(0);
 		m_IsOpened.store(false);
+	}
+	~_SESSION()
+	{
+		delete m_pOverlappedConn;
+		delete m_pOverlappedRecv;
+		delete m_pOverlappedSend;
 	}
 
 	SOCKET GetSocket() const { return m_SocketId; }

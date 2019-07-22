@@ -151,7 +151,7 @@
     <ClInclude Include="IServer.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="SessionManager.h" />
-    <ClInclude Include="StreamData.h" />
+    <ClInclude Include="PacketBufferManager.h" />
     <ClInclude Include="Struct.h" />
     <ClInclude Include="Thread.h" />
     <ClInclude Include="Utils.h" />
