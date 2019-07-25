@@ -1,10 +1,11 @@
 #include "Acceptor.h"
+#include "AsyncIOServer.h"
 
 bool Acceptor::m_winsock_dll = false;
 
 // Constructor of Acceptor
-Acceptor::Acceptor(AsyncIOServer* pServer, const char* ip, const u_short port) 
-	: m_pServer(pServer), m_ip(ip), m_port(port), m_Log(Log::GetInstance())
+Acceptor::Acceptor(AsyncIOServer* pServer, const char* ip, const u_short port, Log* pLog) 
+	: m_pServer(pServer), m_ip(ip), m_port(port), m_Log(pLog)
 {
 	// Load winsock.dll
 	if (m_winsock_dll == false)
@@ -35,7 +36,7 @@ Acceptor::Acceptor(AsyncIOServer* pServer, const char* ip, const u_short port)
 	res = listen(m_listenSocket, 128);
 	ThrowErrorIf(res == SOCKET_ERROR, WSAGetLastError(), "[listen()] Fail listen");
 	
-	m_Log->Write(utils::Format("[%s, %d] accept started\n", ip, port));
+	m_Log->Write(LV::INFO, "[%s, %d] accept started", ip, port);
 }
 
 // Accept client socket
@@ -54,15 +55,15 @@ void Acceptor::Accept()
 
 		if (clientSocket == INVALID_SOCKET)
 		{
-			m_Log->Write(utils::Format("[Error %u] Can not accept ", ::GetLastError()), LOG_LEVEL::ERR);
+			m_Log->Write(LV::ERR, "#%u Can not accept ", ::GetLastError());
 			continue;
 		}
 
-		m_Log->Write(utils::Format("Accepted %u.%u.%u.%u, socket %d",
+		m_Log->Write(LV::INFO, "Accepted %u.%u.%u.%u, socket %d",
 			addr.sin_addr.S_un.S_un_b.s_b1,
 			addr.sin_addr.S_un.S_un_b.s_b2,
 			addr.sin_addr.S_un.S_un_b.s_b3,
-			addr.sin_addr.S_un.S_un_b.s_b4, clientSocket));
+			addr.sin_addr.S_un.S_un_b.s_b4, clientSocket);
 
 		// If server accept socket from client,
 		// register this socket to available session from server's session pool
@@ -73,7 +74,7 @@ void Acceptor::Accept()
 		if (error != FALSE)
 		{
 			closesocket(clientSocket);
-			m_Log->Write(utils::Format("[Error %u] Fail client register", error), LOG_LEVEL::ERR);
+			m_Log->Write(LV::ERR, "#%u Fail client register", error);
 		}
 	}
 }
@@ -82,5 +83,5 @@ void Acceptor::Accept()
 void Acceptor::Run()
 {
 	Acceptor::Accept();
-	m_Log->Write("Accept closed");
+	m_Log->Write(LV::DEBUG, "Accept closed");
 }

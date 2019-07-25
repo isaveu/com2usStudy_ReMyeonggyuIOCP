@@ -6,6 +6,8 @@
 #include <string>
 #include <stdexcept>
 
+#include "ErrorCode.h"
+
 std::string FormatErrorMessage(DWORD error, const std::string& msg);
 void ThrowLastErrorIf(bool expression, const std::string& msg);
 void ThrowErrorIf(bool expression, DWORD error, const std::string& msg);

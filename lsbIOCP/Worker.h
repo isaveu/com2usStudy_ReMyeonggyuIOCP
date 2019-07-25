@@ -3,10 +3,10 @@
 #include <winsock2.h>
 #include <MSWSock.h>
 
-#include "Struct.h"
+#include "Log.h"
+#include "Session.h"
 #include "IServer.h"
 #include "SessionManager.h"
-#include "Log.h"
 #include "Utils.h"
 #include "Thread.h"
 
@@ -18,18 +18,23 @@ class Worker : public Thread
 {
 public:
 	Worker() = delete;
-	Worker(IServerReceiver* pReceiver, HANDLE iocpHandle, SessionManager* sessionManager, AsyncIOServer* pServer);
+	Worker(
+		IServerReceiver* const pReceiver, 
+		const HANDLE iocpHandle, 
+		SessionManager* const pSessionManager, 
+		AsyncIOServer* const pServer, 
+		Log* const pLog);
 	void Run() override;
 
 private:
 	void HandleCompletion();
-	void DispatchError(DWORD error, DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, ULONG_PTR id);
-	void DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, ULONG_PTR id);
+	void DispatchError(DWORD error, LPOVERLAPPED lpOverlapped, INT id);
+	void DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, INT id);
 
 private:
-	IServerReceiver*	m_pReceiver;
-	SessionManager*		m_pSessionManager;
-	AsyncIOServer*		m_pServer;
+	IServerReceiver* const		m_pReceiver;
+	SessionManager* const		m_pSessionManager;
+	AsyncIOServer* const	 	m_pServer;
 	HANDLE				m_IOCPHandle;
 	Log*				m_Log;
 };

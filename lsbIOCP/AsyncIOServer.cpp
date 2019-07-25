@@ -1,51 +1,45 @@
 #include "AsyncIOServer.h"
 
-size_t AsyncIOServer::IO_MIN_SIZE = 1024;
-
-AsyncIOServer::AsyncIOServer(
-	IServerReceiver* pReceiver,
-	DWORD ioMaxSize,
-	DWORD threadNumber,
-	DWORD sessionNumber,
-	std::string name)
-	: m_pReceiver(pReceiver)
-	, m_IOMaxSize(ioMaxSize)
-	, m_ThreadNum(threadNumber)
-	, m_ServerName(name)
-	, m_IOCPHandle(INVALID_HANDLE_VALUE)
-	, m_Log(Log::GetInstance())
+AsyncIOServer::AsyncIOServer(IServerReceiver* const pReceiver, ServerConfig config)
+	: m_pReceiver(pReceiver), m_IOCPHandle(INVALID_HANDLE_VALUE), m_Log(new Log())
 {
-	if (name == "") 
+	if (config.name == "")
 	{
 		m_ServerName = "AsyncIOServer_" + utils::GetDate(); 
 	}
 
-	// Initialize Log file name, level
-	Log::GetInstance()->Init(LOG_LEVEL::DEBUG, m_ServerName);
+	m_ThreadNum = config.threadNumber;
+	m_ServerName = config.name;
 
-	// Check conditions
+	// Initialize Log file name, level
+	// m_Log->Init(LOG_LEVEL::DEBUG, m_ServerName);
+
+	// Config conditions
+	ThrowErrorIf(config.ioMaxSize <= 0, WSAEMSGSIZE, "Buffer size is invalid");
 	ThrowErrorIf(pReceiver == nullptr, WSAEINVAL, "Receiver nullptr");
-	ThrowErrorIf(threadNumber < 1, WSAEINVAL, "Thread number must over than 0");
-	ThrowErrorIf(IO_MIN_SIZE > ioMaxSize, WSAEMSGSIZE, "ioMaxSize is too small than IO_MIN_SIZE");
-	ThrowErrorIf(SessionManager::SESSION_MAX_NUMBER < sessionNumber, WSAENOBUFS, "Session number exceeds max value");
+	ThrowErrorIf(config.threadNumber < 1, WSAEINVAL, "Thread number must over than 0");
 
 	// Create IOCP
-	m_IOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, static_cast<ULONG_PTR>(0), threadNumber);
+	m_IOCPHandle = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, static_cast<ULONG_PTR>(0), config.threadNumber);
 	ThrowLastErrorIf(m_IOCPHandle == INVALID_HANDLE_VALUE, "Fail create IOCP");
-	m_Log->Write("Create IOCP succesfully", LOG_LEVEL::DEBUG);
-	
+	m_Log->Write(LV::DEBUG, "Create IOCP succesfully");
+
 	// Initialize Session Manager (session pool, session id pool etc..)
-	m_pSessionManager = new SessionManager(sessionNumber, ioMaxSize, this);
-	m_Log->Write("Create Session manager succesfully", LOG_LEVEL::DEBUG);
+	SessionConfig sessionConfig = { config.ioMaxSize, this };
+	PacketBufferConfig pktBufferConfig = { config.bufferSize, config.headerSize, config.maxPacketSize };
+	m_pSessionManager = new SessionManager(config.sessionNumber, sessionConfig, pktBufferConfig, m_Log);
+	m_Log->Write(LV::DEBUG, "Create Session manager succesfully");
 
 	// Initialize Worker threads
-	for (DWORD i = 0; i < threadNumber; i++)
+	for (INT i = 0; i < config.threadNumber; i++)
 	{
-		m_Workers.push_back(std::make_shared<Worker>(pReceiver, m_IOCPHandle, m_pSessionManager, this));
+		m_Workers.push_back(std::make_shared<Worker>(pReceiver, m_IOCPHandle, m_pSessionManager, this, m_Log));
 	}
-	m_Log->Write(utils::Format("Create %d threads succesfully", threadNumber), LOG_LEVEL::DEBUG);
+	m_Log->Write(LV::DEBUG, "Create %d threads succesfully", config.threadNumber);
 
-	m_Log->Write("Server Initialized succesfully");
+	// Acceptor initialize
+	// Apply acceptor to my server
+	m_pAcceptor = new Acceptor(this, config.ip, config.port, m_Log);
 };
 
 AsyncIOServer::~AsyncIOServer()
@@ -58,6 +52,7 @@ AsyncIOServer::~AsyncIOServer()
 
 void AsyncIOServer::Start()
 {
+	m_pAcceptor->Start();
 	for (auto& worker : m_Workers)
 	{
 		worker->Start();
@@ -66,6 +61,7 @@ void AsyncIOServer::Start()
 
 void AsyncIOServer::Stop()
 {
+	m_pAcceptor->Stop();
 	for (auto& worker : m_Workers)
 	{
 		worker->Stop();
@@ -74,16 +70,16 @@ void AsyncIOServer::Stop()
 
 void AsyncIOServer::Join()
 {
+	m_pAcceptor->Join();
 	for (auto& worker : m_Workers)
 	{
 		worker->Join();
 	}
-
 }
 
 // Apply socket id to available session
 // Warning : not yet opend socket flag
-LPSESSION AsyncIOServer::LinkSocketToSession(SOCKET clientSocket)
+SESSION* AsyncIOServer::LinkSocketToSession(SOCKET clientSocket)
 {
 	// Get available session id from 'session id pool' (concurrent queue)
 	INT sessionId;
@@ -92,7 +88,7 @@ LPSESSION AsyncIOServer::LinkSocketToSession(SOCKET clientSocket)
 	// Link this session socket with client socket
 	auto pSession = m_pSessionManager->GetSessionPtr(sessionId);
 
-	m_Log->Write(utils::Format("[session #%u] Socket added to session", pSession->GetSessionDescRef().id));
+	m_Log->Write(LV::INFO, "[session #%u] Socket added to session", pSession->GetSessionDescRef().id);
 
 	// Add this socket to current IOCP handle using session id as completion key
 	auto res = ::CreateIoCompletionPort(
@@ -130,9 +126,9 @@ DWORD AsyncIOServer::RegisterClient(SOCKET clientSocket)
 	m_pReceiver->NotifyClientConnected(pSession->GetSessionDescRef());
 
 	// Post receive IOCP job
-	auto error = PostRecv(pSession);
+	auto error = m_pSessionManager->PostRecv(pSession);
 	if (error != FALSE) {
-		m_Log->Write(utils::Format("[Error %u] PostRecv failed", error), LOG_LEVEL::ERR);
+		m_Log->Write(LV::ERR, "[Error %u] PostRecv failed", error);
 		UnlinkSocketToSession(pSession->GetSessionId(), error);
 	}
 
@@ -148,7 +144,7 @@ DWORD AsyncIOServer::UnlinkSocketToSession(INT sessionId, DWORD error)
 	if (pSession->Close())
 	{
 		closesocket(pSession->GetSocket());
-		m_Log->Write(utils::Format("Socket closed %d", pSession->GetSocket()));
+		m_Log->Write(LV::DEBUG, "Socket closed %d", pSession->GetSocket());
 		m_pReceiver->NotifyClientDisconnected(pSession->GetSessionId());
 	}
 
@@ -159,103 +155,9 @@ DWORD AsyncIOServer::UnlinkSocketToSession(INT sessionId, DWORD error)
 	m_pSessionManager->returnId(sessionId);
 
 	if (error == FALSE)
-		m_Log->Write(utils::Format("[session #%u] Release Sokcet", sessionId));
+		m_Log->Write(LV::INFO, "[session #%u] Release Sokcet", sessionId);
 	else
-		m_Log->Write(utils::Format("[session #%u] Release Sokcet by Error #%d", sessionId, error), LOG_LEVEL::ERR);
-
-	return 0;
-}
-
-// Post WSARecv
-DWORD AsyncIOServer::PostRecv(SESSION* pSession)
-{
-	if (pSession == nullptr) return WSAEINVAL;
-
-	// TODO: consider CAS structure by checking open flag
-	{
-		if (pSession->IsOpened() == false) return WSAEINVAL;
-
-		auto lpOverlapped = pSession->GetOverlapped(OP_TYPE::RECV);
-		auto& wsabuf = lpOverlapped->wsabuf;
-
-		// session->enterIO();
-
-		// TODO: really needed?
-		lpOverlapped->Init();
-
-		// Set type and buffer max size
-		lpOverlapped->type = OP_TYPE::RECV;
-		wsabuf.len = static_cast<ULONG>(m_IOMaxSize);
-
-		DWORD bufferCount = 1;
-		DWORD flags = 0;
-		DWORD nbytes = 0;
-		auto res = WSARecv(
-			pSession->GetSocket(),
-			&wsabuf,
-			bufferCount,
-			&nbytes,
-			&flags,
-			&lpOverlapped->overlapped,
-			NULL);
-
-		if (res == SOCKET_ERROR)
-		{
-			auto error = WSAGetLastError();
-			if (error != WSA_IO_PENDING) return error;
-		}
-
-		m_Log->Write("Posted WSARecv()", LOG_LEVEL::DEBUG);
-	}
-
-	return 0;
-}
-
-// Post WSASend
-DWORD AsyncIOServer::PostSend(SESSION* pSession, size_t length, char* data)
-{
-	// Check condition
-	if (length <= 0 || length > m_IOMaxSize) return WSAEMSGSIZE;
-	if (length == 0 || data == nullptr) return WSAEINVAL;
-	if (pSession == nullptr) return WSAEINVAL;
-
-	// TODO: consider CAS structure by checking open flag
-	{
-		if (pSession->IsOpened() == false) return WSAEINVAL;
-
-		auto lpOverlapped = pSession->GetOverlapped(OP_TYPE::SEND);
-		auto& wsabuf = lpOverlapped->wsabuf;
-
-		// pSession->enterIO();
-
-		// TODO: really needed?
-		lpOverlapped->Init();
-
-		// Set type and copy data & length to WSAbuffer
-		lpOverlapped->type = OP_TYPE::SEND;
-		wsabuf.len = static_cast<ULONG>(length);
-		CopyMemory(wsabuf.buf, data, length);
-
-		DWORD bufferCount = 1;
-		DWORD flags = 0;
-		DWORD nbytes = 0;
-		auto res = WSASend(
-			pSession->GetSocket(),
-			&wsabuf,
-			bufferCount,
-			&nbytes,
-			flags,
-			&lpOverlapped->overlapped,
-			NULL);
-
-		if (res == SOCKET_ERROR)
-		{
-			auto error = WSAGetLastError();
-			if (error != WSA_IO_PENDING && error != ERROR_SUCCESS) return error;
-		}
-
-		m_Log->Write("Posted WSARSend()", LOG_LEVEL::DEBUG);
-	}
+		m_Log->Write(LV::ERR, "[session #%u] Release Sokcet by Error #%d", sessionId, error);
 
 	return 0;
 }

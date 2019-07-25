@@ -9,6 +9,7 @@
 #include "Utils.h"
 #include "Worker.h"
 #include "SessionManager.h"
+#include "Acceptor.h"
 #include "AsyncIOException.h"
 
 using workers = std::vector<std::shared_ptr<Worker>>;
@@ -17,37 +18,33 @@ class AsyncIOServer : public IServerController
 {
 public:
 	AsyncIOServer() = delete;
-	AsyncIOServer(IServerReceiver* pReceiver, DWORD ioMaxSize, DWORD threadNumber, DWORD sessionNumber,  std::string name);
+	AsyncIOServer(IServerReceiver* const pReceiver, ServerConfig config);
 	~AsyncIOServer();
 	void Start();
 	void Stop();
 	void Join();
 
-	LPSESSION LinkSocketToSession(SOCKET clientSocket);
+	SESSION* LinkSocketToSession(SOCKET clientSocket);
 	DWORD UnlinkSocketToSession(INT sessionId, DWORD error);
 	DWORD RegisterClient(SOCKET clientSocket);
 
-	DWORD PostRecv(SESSION* session);
-	DWORD PostSend(SESSION* session, size_t length, char* data);
-
 	// IServerController
-	DWORD SendPacket(SESSIONDESC& sessionDesc, size_t length, char* data) override;
-	DWORD ConnectSocket(size_t requestId, const char* ip, u_short port) override;
-	DWORD DisconnectSocket(SESSIONDESC& sessionDesc) override;
+	DWORD SendPacket(const INT sessionId, short length, char* data, short headerLength, char* header) override;
+	DWORD ConnectSocket(INT requestId, const char* ip, u_short port) override;
+	DWORD DisconnectSocket(const INT sessionId) override;
 
 private:
+	// Handler
 	IServerReceiver*	m_pReceiver;
-
-	HANDLE			m_IOCPHandle;
-
-	static size_t	IO_MIN_SIZE;
-	size_t			m_IOMaxSize;
-
-	size_t			m_ThreadNum;
-	workers			m_Workers;
-
-	std::string		m_ServerName;
-	Log*			m_Log;
-
 	SessionManager*		m_pSessionManager;
+	Acceptor*			m_pAcceptor;
+	HANDLE				m_IOCPHandle;
+
+	// AsyncIOServer config
+	INT				m_ThreadNum;
+	workers			m_Workers;
+	std::string		m_ServerName;
+
+	// Logger
+	Log*			m_Log;
 };

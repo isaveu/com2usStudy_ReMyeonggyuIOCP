@@ -13,80 +13,68 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="헤더 파일\Common">
+      <UniqueIdentifier>{64379cbb-bb88-4998-82db-ee5cb22e27d2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Acceptor.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="Packet.h">
+      <Filter>헤더 파일\Common</Filter>
     </ClInclude>
-    <ClInclude Include="Thread.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Log.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="AsyncIOServer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="IServer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Worker.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Struct.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="AsyncIOException.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="SessionManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="PacketBufferManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Session.h">
-      <Filter>헤더 파일</Filter>
+    <ClInclude Include="PacketID.h">
+      <Filter>헤더 파일\Common</Filter>
     </ClInclude>
     <ClInclude Include="ErrorCode.h">
+      <Filter>헤더 파일\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketProcess.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ILog.h">
+    <ClInclude Include="User.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="conmanip.h">
+    <ClInclude Include="UserManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Room.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="LogicMain.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectedUserManager.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="LogicConfig.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Acceptor.cpp">
+    <ClCompile Include="PacketProcess.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Thread.cpp">
+    <ClCompile Include="UserManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Log.cpp">
+    <ClCompile Include="Room.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.cpp">
+    <ClCompile Include="LogicReceiver.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="AsyncIOException.cpp">
+    <ClCompile Include="LogicMain.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="AsyncIOServer.cpp">
+    <ClCompile Include="RoomManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Worker.cpp">
+    <ClCompile Include="PacketProcessLogin.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="AsyncIOServerController.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="SessionManager.cpp">
+    <ClCompile Include="PacketProcessRoom.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

@@ -5,29 +5,36 @@
 #include <vector>
 
 #include "Log.h"
-#include "Struct.h"
+#include "Session.h"
 #include "IServer.h"
+#include "AsyncIOException.h"
 
 class SessionManager
 {
 public:
 	SessionManager() = delete;
-	SessionManager(size_t sessionNum, size_t ioMaxBufSize, IServerController* pController);
+	SessionManager(
+		const INT sessionNum
+		, SessionConfig sessionConfig
+		, PacketBufferConfig pktBufferConfig
+		, Log* const pLog);
 
 	bool retrieveId(INT& _out_sessionId);
 	void returnId(INT sessionId);
 
 	SESSIONDESC& GetSessionDescRef(INT sessionId);
-	LPSESSION GetSessionPtr(INT sessionId);
+	SESSION* GetSessionPtr(INT sessionId);
 
-public:
-	static size_t	SESSION_MAX_NUMBER;
+	DWORD PostRecv(SESSION* session);
+	DWORD PostSend(SESSION* session, size_t length);
 
 private:
 	using cqueue = Concurrency::concurrent_queue<INT>;
-
-	size_t			m_SessionNumber;
+	INT				m_IOBufMaxSize;
+	INT				m_SessionNumber;
 	cqueue			m_SessionIdPool;
-	std::vector<LPSESSION>	m_SessionPool;
+	std::vector<SESSION*>	m_SessionPool;
 	std::atomic_int			m_ConnectedSessionNumber;
+
+	Log* m_Log;
 };

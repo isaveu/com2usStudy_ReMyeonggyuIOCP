@@ -1,23 +1,27 @@
 #include "SessionManager.h"
 
-size_t SessionManager::SESSION_MAX_NUMBER = 3000;
-
 // Constructor of SessionManager
 // Create session object pool ( [sessionNum] sessions )
 // Set unique id of each session and push id to concurrent_queue (session id queue)
-SessionManager::SessionManager(size_t sessionNum, size_t ioBufMaxSize, IServerController* pController) : m_SessionNumber(sessionNum)
+SessionManager::SessionManager(
+	const INT sessionNum
+	, SessionConfig sessionConfig
+	, PacketBufferConfig pktBufferConfig
+	, Log* const pLog)
+	: m_SessionNumber(sessionNum), m_IOBufMaxSize(sessionConfig.ioBufMaxSize), m_Log(pLog)
 {
+
 	m_ConnectedSessionNumber.store(0);
 	INT sessionId = 0;
 	m_SessionPool.assign(sessionNum, nullptr);
 	for (auto& session : m_SessionPool)
 	{
-		session = new SESSION(ioBufMaxSize, pController);
+		session = new SESSION(sessionConfig, pktBufferConfig);
 		session->SetSessionId(sessionId);
 		m_SessionIdPool.push(sessionId++);
 	}
 
-	Log::GetInstance()->Write(utils::Format("Create %d Sessions succesfully", sessionNum), LOG_LEVEL::DEBUG);
+	pLog->Write(LV::DEBUG, "Create %d Sessions succesfully", sessionNum);
 }
 
 // Retrieve available session id and count up total connected session number
@@ -43,7 +47,97 @@ SESSIONDESC& SessionManager::GetSessionDescRef(INT sessionId)
 // SESSION has atomic member values, so they can not use &(ref) constructor
 // https://stackoverflow.com/questions/14182258/c11-write-move-constructor-with-atomicbool-member
 // Get session of session id
-LPSESSION SessionManager::GetSessionPtr(INT sessionId)
+SESSION* SessionManager::GetSessionPtr(INT sessionId)
 {
 	return m_SessionPool.at(sessionId);
+}
+
+// Post WSARecv
+DWORD SessionManager::PostRecv(SESSION* pSession)
+{
+	if (pSession == nullptr) return WSAEINVAL;
+
+	// TODO: consider CAS structure by checking open flag
+	{
+		if (pSession->IsOpened() == false) return WSAEINVAL;
+
+		auto lpOverlapped = pSession->GetOverlapped(OP_TYPE::RECV);
+
+		WSABUF wsabuf;
+		wsabuf.buf = lpOverlapped->bufferMngr.WriteCurrent();
+		wsabuf.len = lpOverlapped->bufferMngr.WritableLength();
+
+		// session->enterIO();
+
+		// TODO: really needed?
+		// lpOverlapped->Init();
+
+		DWORD bufferCount = 1;
+		DWORD flags = 0;
+		DWORD nbytes = 0;
+		auto res = WSARecv(
+			pSession->GetSocket(),
+			&wsabuf,
+			bufferCount,
+			&nbytes,
+			&flags,
+			&lpOverlapped->overlapped,
+			NULL);
+
+		if (res == SOCKET_ERROR)
+		{
+			auto error = WSAGetLastError();
+			if (error != WSA_IO_PENDING) return error;
+		}
+
+		m_Log->Write(LV::DEBUG, "Posted WSARecv()");
+	}
+
+	return 0;
+}
+
+// Post WSASend
+DWORD SessionManager::PostSend(SESSION* pSession, size_t length)
+{
+	// Check condition
+	if (length <= 0 || length > m_IOBufMaxSize) return WSAEMSGSIZE;
+	if (pSession == nullptr) return WSAEINVAL;
+
+	// TODO: consider CAS structure by checking open flag
+	{
+		if (pSession->IsOpened() == false) return WSAEINVAL;
+
+		auto lpOverlapped = pSession->GetOverlapped(OP_TYPE::SEND);
+
+		WSABUF wsabuf;
+		wsabuf.buf = lpOverlapped->bufferMngr.ReadCurret();
+		wsabuf.len = static_cast<ULONG>(length);
+
+		// pSession->enterIO();
+
+		// TODO: really needed?
+		// lpOverlapped->Init();
+
+		DWORD bufferCount = 1;
+		DWORD flags = 0;
+		DWORD nbytes = 0;
+		auto res = WSASend(
+			pSession->GetSocket(),
+			&wsabuf,
+			bufferCount,
+			&nbytes,
+			flags,
+			&lpOverlapped->overlapped,
+			NULL);
+
+		if (res == SOCKET_ERROR)
+		{
+			auto error = WSAGetLastError();
+			if (error != WSA_IO_PENDING && error != ERROR_SUCCESS) return error;
+		}
+
+		m_Log->Write(LV::DEBUG, "Posted WSARSend()");
+	}
+
+	return 0;
 }

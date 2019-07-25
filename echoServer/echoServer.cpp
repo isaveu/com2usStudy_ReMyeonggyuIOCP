@@ -1,32 +1,63 @@
-﻿#include "../lsbIOCP/Acceptor.h"
-#include "../lsbIOCP/AsyncIOServer.h"
-#include "lsbReceiver.h"
-#include "../lsbIOCP/PacketBufferManager.h"
+﻿#include <iostream>
+#include <thread>
+
+#include "../lsbLogic/LogicMain.h"
 
 int main()
 {
-	const char* ip = "127.0.0.1";
-	const unsigned short port = 23452;
-	std::string serverName = "simpleEchoServer";
+	const INT threadNumber = 2;
 
-	DWORD ioMaxBufferSize = 1024;
-	DWORD threadNumber = 2;
-	DWORD sessionNumber = 1000;
+	const INT sessionNumber = 1000;
+	const INT ioMaxSize = 1024;
 
-	// Make custom receiver
-	lsbReceiver receiver;
+	const int bufferSize = 1024;
+	const int headerSize = 5;
+	const int maxPacketSize = 50;
 
-	// Make your server with custom receiver
-	AsyncIOServer lsbServer(&receiver, ioMaxBufferSize, threadNumber, sessionNumber, serverName);
+	const char* const ip = "127.0.0.1";
+	const u_short port = 23452;
+	const std::string name = "SampleServer";
 
-	// Apply acceptor to your server
-	Acceptor acceptor(&lsbServer, ip, port);
+	ServerConfig config =
+	{
+		threadNumber,
 
-	lsbServer.Start();
-	acceptor.Start();
+		sessionNumber,
+		ioMaxSize,
 
-	acceptor.Join();
-	lsbServer.Join();
+		bufferSize,
+		headerSize,
+		maxPacketSize,
+
+		ip, port, name,
+	};
+
+	const int maxUserNum = 700;
+	const int maxRoomNum = 100;
+	const int maxUserNumInRoom = 10;
+
+	lsbLogic::LogicConfig lconfig =
+	{
+		maxUserNum,
+		maxRoomNum,
+		maxUserNumInRoom,
+	};
+
+	lsbLogic::LogicMain myServer;
+	myServer.Init(config, lconfig);
+	myServer.Start();
+
+	std::thread logicThread([&]()
+		{
+			myServer.Run();
+		}
+	);
+
+	// TODO: key 입력 시 종료
+	char a;
+	std::cin >> a;
+	myServer.Stop();
+	logicThread.join();
 
 	return 0;
 }

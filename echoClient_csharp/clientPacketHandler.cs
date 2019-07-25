@@ -10,7 +10,7 @@ namespace echoClient_csharp
 
         void SetPacketHandler()
         {
-            PacketFuncDic.Add(PACKET_ID.PACKET_ID_ECHO, PacketProcess_Echo);
+            PacketFuncDic.Add(PACKET_ID.PACKET_ID_ECHO_RES, PacketProcess_Echo);
             PacketFuncDic.Add(PACKET_ID.PACKET_ID_ERROR_NTF, PacketProcess_ErrorNotify);
         }
 

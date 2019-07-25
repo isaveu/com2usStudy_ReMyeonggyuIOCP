@@ -8,14 +8,14 @@ class lsbReceiver : public IServerReceiver
 	// So, when the event occurs, we can handle the logic.
 
 	// Triggered when client socket is connected
-	void NotifyClientConnected(SESSIONDESC& sessionDesc) const override;
+	void NotifyClientConnected(SESSIONDESC& sessionDesc) override;
 
 	// Triggered when socket is disconnected
-	void NotifyClientDisconnected(short sessionId) const override;
+	void NotifyClientDisconnected(INT sessionId) override;
 
 	// Triggered when server get message from client
-	void NotifyMessage(SESSIONDESC& sessionDesc, size_t bytesNumber, char* data) const override;
+	void NotifyMessage(SESSIONDESC& sessionDesc) override;
 
 	// Triggered when the job of connecting to other server is completed
-	void NotifyServerConnectingResult(SESSIONDESC& session, INT requrestId, DWORD error) const override;
+	void NotifyServerConnectingResult(SESSIONDESC& session, INT requrestId, DWORD error) override;
 };

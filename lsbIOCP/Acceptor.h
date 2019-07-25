@@ -8,18 +8,22 @@
 
 #include "Log.h"
 #include "Thread.h"
-#include "AsyncIOServer.h"
 #include "AsyncIOException.h"
 
 // ws2_32.lib
 // https://m.blog.naver.com/PostView.nhn?blogId=gimjoonbum&logNo=220065601788&proxyReferer=https%3A%2F%2Fwww.google.com%2F
 #pragma comment(lib, "ws2_32.lib")
 
+class AsyncIOServer;
+
 class Acceptor : public Thread
 {
 public:
 	Acceptor() = delete;
-	Acceptor(AsyncIOServer* pServer, const char* ip, const u_short port);
+	Acceptor(AsyncIOServer* pServer, 
+		const char* ip, 
+		const u_short port, 
+		Log* const pLog);
 	~Acceptor() = default;
 	void Run() override;
 

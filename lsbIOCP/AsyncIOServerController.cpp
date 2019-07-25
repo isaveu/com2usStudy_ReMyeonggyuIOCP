@@ -1,28 +1,38 @@
 #include "AsyncIOServer.h"
 
 // Server request sending some packet data to client
-DWORD AsyncIOServer::SendPacket(SESSIONDESC& sessionDesc, size_t length, char* data)
+DWORD AsyncIOServer::SendPacket(const INT sessionId, short length, char* data, short headerLength, char* pHeader)
 {
-	m_Log->Write("Server request: send packet", LOG_LEVEL::DEBUG);
-	auto session = m_pSessionManager->GetSessionPtr(sessionDesc.id);
-	PostSend(session, length, data);
+	m_Log->Write(LV::DEBUG, "Server request: send packet");
+	auto pSession = m_pSessionManager->GetSessionPtr(sessionId);
+	auto overlappedEx = pSession->GetOverlapped(OP_TYPE::SEND);
+	auto totalLength = length + headerLength;
+
+	std::lock_guard<std::mutex> lock(pSession->m_SendLock);
+
+	if (headerLength > 0)
+	{
+		overlappedEx->bufferMngr.Write(pHeader, 0, headerLength);
+	}
+	overlappedEx->bufferMngr.Write(data, 0, length);
+	m_pSessionManager->PostSend(pSession, totalLength);
 	return 0;
 }
 
 // Server request disconnecting current client
-DWORD AsyncIOServer::DisconnectSocket(SESSIONDESC& sessionDesc)
+DWORD AsyncIOServer::DisconnectSocket(const INT sessionId)
 {
-	m_Log->Write("Server request: disconnect", LOG_LEVEL::DEBUG);
-	UnlinkSocketToSession(sessionDesc.id, 0);
+	m_Log->Write(LV::DEBUG, "Server request: disconnect");
+	UnlinkSocketToSession(sessionId, 0);
 	return 0;
 }
 
 // Server request connecting another server
-DWORD AsyncIOServer::ConnectSocket(size_t requestId, const char* ip, u_short port)
+DWORD AsyncIOServer::ConnectSocket(INT requestId, const char* ip, u_short port)
 {
-	m_Log->Write("Server request: ConnectSocket", LOG_LEVEL::DEBUG);
+	m_Log->Write(LV::DEBUG, "Server request: ConnectSocket");
 
-	auto sockAddrLen = sizeof(SOCKADDR_IN);
+	auto sockAddrLen = static_cast<int>(sizeof(SOCKADDR_IN));
 
 	SOCKADDR_IN sockAddr;
 	ZeroMemory(&sockAddr, sockAddrLen);

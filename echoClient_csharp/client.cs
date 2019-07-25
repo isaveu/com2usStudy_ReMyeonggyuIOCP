@@ -98,6 +98,7 @@ namespace echoClient_csharp
         void NetworkReadProcess()
         {
             const Int16 PacketHeaderSize = PacketDef.PACKET_HEADER_SIZE;
+            const Int16 PacketErrorCodeSize = PacketDef.PACKET_ERROR_CODE_SIZE;
 
             while (IsNetworkThreadRunning)
             {
@@ -131,9 +132,12 @@ namespace echoClient_csharp
                         // Get packet type (fifth byte)
                         packet.Type = (SByte)data.Array[(data.Offset + 4)];
 
+                        // Get packet error code
+                        packet.ErrorCde = BitConverter.ToInt16(data.Array, data.Offset + 5);
+
                         // Get packet body (the following)
                         packet.BodyData = new byte[packet.DataSize];
-                        Buffer.BlockCopy(data.Array, (data.Offset + PacketHeaderSize), packet.BodyData, 0, packet.DataSize);
+                        Buffer.BlockCopy(data.Array, (data.Offset + PacketHeaderSize + PacketErrorCodeSize), packet.BodyData, 0, packet.DataSize);
 
                         lock (((System.Collections.ICollection)RecvPacketQueue).SyncRoot)
                         {
@@ -294,7 +298,7 @@ namespace echoClient_csharp
 
             var body = Encoding.UTF8.GetBytes(echoMsg.Text);
 
-            PostSendPacket(PACKET_ID.PACKET_ID_ECHO, body);
+            PostSendPacket(PACKET_ID.PACKET_ID_ECHO_REQ, body);
 
             Log.Write($"Echo req:  {echoMsg.Text}, {body.Length}");
         }
