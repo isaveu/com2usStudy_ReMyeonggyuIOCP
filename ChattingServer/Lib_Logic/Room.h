@@ -4,8 +4,8 @@
 #include <string>
 #include <memory>
 
-#include "../Lib_NetworkIOCP/Session.h"
-#include "../Lib_NetworkIOCP/Log.h"
+#include "../../Lib_NetworkIOCP/Session.h"
+#include "../../Lib_NetworkIOCP/Log.h"
 #include "Common/Packet.h"
 #include "Common/ErrorCode.h"
 #include "User.h"
@@ -57,6 +57,6 @@ namespace lsbLogic
 		std::string m_Title;
 		std::map<short, User*> m_UserList;
 
-		LogicMain*	m_pLogicMain = nullptr;
+		LogicMain* m_pLogicMain = nullptr;
 	};
 }

@@ -108,14 +108,14 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)../protobuf/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../protobuf/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)../protobuf/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)../../protobuf/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -161,11 +161,11 @@
     <ClCompile Include="echoServer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Lib_NetworkIOCP\lsbIOCP.vcxproj">
+      <Project>{c4319b70-024b-4081-9966-6c4c8e1d0727}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Lib_Logic\lsbLogic.vcxproj">
       <Project>{8dadb2ae-8359-47ad-9f26-0472e3f0fd3b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Lib_NetworkIOCP\lsbIOCP.vcxproj">
-      <Project>{c4319b70-024b-4081-9966-6c4c8e1d0727}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Lib_NetworkIOCP/INetwork.h"
+#include "../../Lib_NetworkIOCP/INetwork.h"
 
 #include "PacketID.h"
 #include "ErrorCode.h"

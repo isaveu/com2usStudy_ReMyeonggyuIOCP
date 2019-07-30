@@ -1,0 +1,91 @@
+syntax = "proto3";
+package lsbProto;
+
+// import "Define.proto";
+
+// Echo packet
+// Request and Response format are same
+message Echo {
+  string msg = 1;
+}
+
+/**********************************/
+
+// Login Packet
+message LoginReq {
+  string id = 1;
+  string pw = 2;
+}
+
+message LoginRes {
+  int32 res = 1;
+}
+
+/**********************************/
+
+// Logout Packet
+message LogoutReq {
+}
+
+message LogoutRes {
+  int32 res = 1;
+}
+
+/**********************************/
+
+// for user obj
+message UserInfo {
+  int32 index = 1;
+  string id = 2;
+}
+
+// Room Enterance Packet
+message RoomEnterReq {
+  bool isCreate = 1;
+  int32 roomIndex = 2;
+  string roomTitle = 3;
+}
+
+message RoomEnterRes {
+  int32 res = 1;
+  int32 roomIndex = 2;
+  string roomTitle = 3;
+}
+
+message RoomEnterNtf {
+  UserInfo user = 1;
+}
+
+message RoomUserListNtf {
+  repeated UserInfo user = 1;
+}
+
+/**********************************/
+
+// Room Leave Packet
+message RoomLeaveReq {
+}
+
+message RoomLeaveRes {
+  int32 res = 1;
+}
+
+message RoomLeaveNtf {
+  int32 userIndex = 1;
+}
+
+/**********************************/
+
+// Room Chatting Packet
+message RoomChatReq {
+  string msg = 1;
+}
+
+message RoomChatRes {
+  int32 res = 1;
+}
+
+message RoomChatNtf {
+  int32 userIndex = 1;
+  string msg = 2;
+}

@@ -2,7 +2,7 @@
 
 #include <concurrent_queue.h>
 
-#include "../Lib_NetworkIOCP/Define.h"
+#include "../../Lib_NetworkIOCP/Define.h"
 #include "Common/Packet.h"
 #include "LogicConfig.h"
 

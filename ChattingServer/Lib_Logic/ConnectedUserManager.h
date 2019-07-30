@@ -4,7 +4,7 @@
 #include <chrono>
 #include <vector>
 
-#include "../Lib_NetworkIOCP/Log.h"
+#include "../../Lib_NetworkIOCP/Log.h"
 #include "LogicMain.h"
 
 namespace lsbLogic
