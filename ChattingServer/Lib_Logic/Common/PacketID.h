@@ -1,0 +1,37 @@
+#pragma once
+
+namespace lsbLogic
+{
+	enum class PACKET_ID : short
+	{
+		NTF_SYS_CONNECT_SESSION = 10,
+		NTF_SYS_CLOSE_SESSION = 11,
+
+		LOGIN_REQ = 21,
+		LOGIN_RES = 22,
+
+		LOGOUT_REQ = 26,
+		LOGOUT_RES = 27,
+
+		ROOM_ENTER_REQ = 31,
+		ROOM_ENTER_RES = 32,
+		ROOM_ENTER_NEW_USER_NTF = 33,
+
+		ROOM_USER_LIST = 34,
+
+		ROOM_LEAVE_REQ = 36,
+		ROOM_LEAVE_RES = 37,
+		ROOM_LEAVE_USER_NTF = 38,
+
+		ROOM_CHAT_REQ = 42,
+		ROOM_CHAT_RES = 42,
+		ROOM_CHAT_NTF = 43,
+
+		ROOM_CHANGED_INFO_NTF = 46,
+
+		DEV_ECHO_REQ = 241,
+		DEV_ECHO_RES = 242,
+
+		MAX = 256
+	};
+}
