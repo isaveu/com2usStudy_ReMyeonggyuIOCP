@@ -12,6 +12,7 @@ namespace echoClient_csharp
         void SetPacketHandler()
         {
             PacketFuncDic.Add(PACKET_ID.PACKET_ID_ECHO_REQ, PacketProcess_Echo);
+            //PacketFuncDic.Add(PACKET_ID.PACKET_ID_ROOM_RELAY_NTF, PacketProcess_RoomRelayNotify);
         }
 
         void PacketProcess(PacketData packet)

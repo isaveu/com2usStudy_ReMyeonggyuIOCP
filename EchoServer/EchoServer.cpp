@@ -10,7 +10,7 @@ int main()
 
 	constexpr int bufferSize = 1024;
 	constexpr int headerSize = 0;
-	constexpr int maxPacketSize = 100;
+	constexpr int maxPacketSize = 200;
 
 	const char* ip = "127.0.0.1";
 	constexpr short port = 23452;

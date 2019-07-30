@@ -159,7 +159,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EchoReceiver.h" />
-    <ClInclude Include="Server.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lib_NetworkIOCP\lsbIOCP.vcxproj">

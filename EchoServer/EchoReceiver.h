@@ -23,7 +23,12 @@ private:
 	bool NotifyMessage(const int sessionId, int nBytes, char* pData) override
 	{
 		printf("Got message size %d bytes\n", nBytes);
-		m_pNetwork->SendPacket(sessionId, (short)nBytes, pData, nullptr, 0, nullptr);
+		constexpr int MAX_ECHO_MSG = 200;
+		char msg[MAX_ECHO_MSG];
+
+		CopyMemory(msg, pData, nBytes);
+
+		m_pNetwork->SendPacket(sessionId, (short)nBytes, msg, nullptr, 0, nullptr);
 		return true;
 	}
 
