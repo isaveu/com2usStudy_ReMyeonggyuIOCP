@@ -27,16 +27,7 @@
     <ClInclude Include="Utils.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="AsyncIOServer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="IServer.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Worker.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Struct.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="AsyncIOException.h">
@@ -60,6 +51,15 @@
     <ClInclude Include="conmanip.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="AsyncIONetwork.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="INetwork.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Define.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Acceptor.cpp">
@@ -77,16 +77,16 @@
     <ClCompile Include="AsyncIOException.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="AsyncIOServer.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Worker.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="AsyncIOServerController.cpp">
+    <ClCompile Include="SessionManager.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="SessionManager.cpp">
+    <ClCompile Include="AsyncIONetwork.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="AsyncIONetworkController.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

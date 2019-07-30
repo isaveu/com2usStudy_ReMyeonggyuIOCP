@@ -3,20 +3,16 @@
 // Constructor of SessionManager
 // Create session object pool ( [sessionNum] sessions )
 // Set unique id of each session and push id to concurrent_queue (session id queue)
-SessionManager::SessionManager(
-	const INT sessionNum
-	, SessionConfig sessionConfig
-	, PacketBufferConfig pktBufferConfig
-	, Log* const pLog)
-	: m_SessionNumber(sessionNum), m_IOBufMaxSize(sessionConfig.ioBufMaxSize), m_Log(pLog)
+SessionManager::SessionManager(const int sessionNum, const PacketBufferConfig pktBufferConfig, Log* const pLog)
+	: m_SessionNumber(sessionNum), m_IOBufMaxSize(pktBufferConfig.bufferSize), m_pLogger(pLog)
 {
 
 	m_ConnectedSessionNumber.store(0);
-	INT sessionId = 0;
+	int sessionId = 0;
 	m_SessionPool.assign(sessionNum, nullptr);
 	for (auto& session : m_SessionPool)
 	{
-		session = new SESSION(sessionConfig, pktBufferConfig);
+		session = new SESSION(pktBufferConfig);
 		session->SetSessionId(sessionId);
 		m_SessionIdPool.push(sessionId++);
 	}
@@ -24,48 +20,57 @@ SessionManager::SessionManager(
 	pLog->Write(LV::DEBUG, "Create %d Sessions succesfully", sessionNum);
 }
 
+SessionManager::~SessionManager()
+{
+	m_SessionIdPool.clear();
+	for (auto& session : m_SessionPool)
+	{
+		delete session;
+	}
+}
+
 // Retrieve available session id and count up total connected session number
-bool SessionManager::retrieveId(INT& _out_sessionId)
+bool SessionManager::retrieveId(int& _out_sessionId)
 {
 	m_ConnectedSessionNumber++;
 	return m_SessionIdPool.try_pop(_out_sessionId);
 }
 
 // Return available session id and count up total connected session number
-void SessionManager::returnId(INT sessionId)
+void SessionManager::returnId(int sessionId)
 {
 	m_ConnectedSessionNumber--;
 	m_SessionIdPool.push(sessionId);
 }
 
-// Get session descriptor of session id
-SESSIONDESC& SessionManager::GetSessionDescRef(INT sessionId)
-{
-	return m_SessionPool.at(sessionId)->GetSessionDescRef();
-}
-
 // SESSION has atomic member values, so they can not use &(ref) constructor
 // https://stackoverflow.com/questions/14182258/c11-write-move-constructor-with-atomicbool-member
 // Get session of session id
-SESSION* SessionManager::GetSessionPtr(INT sessionId)
+SESSION* SessionManager::GetSessionPtr(int sessionId)
 {
 	return m_SessionPool.at(sessionId);
 }
 
 // Post WSARecv
-DWORD SessionManager::PostRecv(SESSION* pSession)
+NET_ERROR_CODE SessionManager::PostRecv(SESSION* pSession)
 {
-	if (pSession == nullptr) return WSAEINVAL;
+	if (pSession == nullptr)
+	{
+		return NET_ERROR_CODE::INVALID_SESSION;
+	}
 
 	// TODO: consider CAS structure by checking open flag
 	{
-		if (pSession->IsOpened() == false) return WSAEINVAL;
+		if (pSession->IsOpened() == false)
+		{
+			return NET_ERROR_CODE::SESSION_NOT_OPENED;
+		};
 
 		auto lpOverlapped = pSession->GetOverlapped(OP_TYPE::RECV);
 
 		WSABUF wsabuf;
 		wsabuf.buf = lpOverlapped->bufferMngr.WriteCurrent();
-		wsabuf.len = lpOverlapped->bufferMngr.WritableLength();
+		wsabuf.len = lpOverlapped->bufferMngr.MaxWriteLegnth();
 
 		// session->enterIO();
 
@@ -84,33 +89,42 @@ DWORD SessionManager::PostRecv(SESSION* pSession)
 			&lpOverlapped->overlapped,
 			NULL);
 
-		if (res == SOCKET_ERROR)
+		if (res == SOCKET_ERROR && ::WSAGetLastError() != WSA_IO_PENDING)
 		{
-			auto error = WSAGetLastError();
-			if (error != WSA_IO_PENDING) return error;
+			return NET_ERROR_CODE::FAIL_WSA_RECV;
 		}
 
-		m_Log->Write(LV::DEBUG, "Posted WSARecv()");
+		m_pLogger->Write(LV::DEBUG, "Posted WSARecv()");
 	}
 
-	return 0;
+	return NET_ERROR_CODE::NONE;
 }
 
 // Post WSASend
-DWORD SessionManager::PostSend(SESSION* pSession, size_t length)
+NET_ERROR_CODE SessionManager::PostSend(SESSION* pSession, int length)
 {
 	// Check condition
-	if (length <= 0 || length > m_IOBufMaxSize) return WSAEMSGSIZE;
-	if (pSession == nullptr) return WSAEINVAL;
+	if (length <= 0 || length > m_IOBufMaxSize)
+	{
+		return NET_ERROR_CODE::SEND_DATA_EXCEEDED_BUFFER;
+	};
+
+	if (pSession == nullptr)
+	{
+		return NET_ERROR_CODE::INVALID_SESSION;
+	};
 
 	// TODO: consider CAS structure by checking open flag
 	{
-		if (pSession->IsOpened() == false) return WSAEINVAL;
+		if (pSession->IsOpened() == false)
+		{
+			return NET_ERROR_CODE::SESSION_NOT_OPENED;
+		};
 
 		auto lpOverlapped = pSession->GetOverlapped(OP_TYPE::SEND);
 
 		WSABUF wsabuf;
-		wsabuf.buf = lpOverlapped->bufferMngr.ReadCurret();
+		wsabuf.buf = lpOverlapped->bufferMngr.Read(length);
 		wsabuf.len = static_cast<ULONG>(length);
 
 		// pSession->enterIO();
@@ -133,11 +147,14 @@ DWORD SessionManager::PostSend(SESSION* pSession, size_t length)
 		if (res == SOCKET_ERROR)
 		{
 			auto error = WSAGetLastError();
-			if (error != WSA_IO_PENDING && error != ERROR_SUCCESS) return error;
+			if (error != WSA_IO_PENDING && error != ERROR_SUCCESS)
+			{
+				return NET_ERROR_CODE::FAIL_WSA_SEND;
+			}
 		}
 
-		m_Log->Write(LV::DEBUG, "Posted WSARSend()");
+		m_pLogger->Write(LV::DEBUG, "Posted WSARSend()");
 	}
 
-	return 0;
+	return NET_ERROR_CODE::NONE;
 }

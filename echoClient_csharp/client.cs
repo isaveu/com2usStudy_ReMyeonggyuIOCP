@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using System.Windows.Threading;
+using LsbProto;
+using Google.Protobuf;
 
 namespace echoClient_csharp
 {
@@ -50,6 +52,12 @@ namespace echoClient_csharp
             dispatcherUITimer.Start();
 
             btnDisconnect.Enabled = false;
+            btnEchoSend.Enabled = false;
+            btnLogin.Enabled = false;
+            btnLogout.Enabled = false;
+            btnEnter.Enabled = false;
+            btnLeave.Enabled = false;
+            btnCreate.Enabled = false;
 
             SetPacketHandler();
             Log.Write("Client run", LOG_LEVEL.INFO);
@@ -79,6 +87,8 @@ namespace echoClient_csharp
                 currentStateText.Text = string.Format("{0}. Connected", DateTime.Now);
                 btnConnect.Enabled = false;
                 btnDisconnect.Enabled = true;
+                btnEchoSend.Enabled = true;
+                btnLogin.Enabled = true;
 
                 Log.Write($"connected to server {address}", LOG_LEVEL.INFO);
             }
@@ -98,7 +108,6 @@ namespace echoClient_csharp
         void NetworkReadProcess()
         {
             const Int16 PacketHeaderSize = PacketDef.PACKET_HEADER_SIZE;
-            const Int16 PacketErrorCodeSize = PacketDef.PACKET_ERROR_CODE_SIZE;
 
             while (IsNetworkThreadRunning)
             {
@@ -121,7 +130,7 @@ namespace echoClient_csharp
                         {
                             break;
                         }
-                        
+
                         var packet = new PacketData();
                         // Get packet body size (total byte size - header bytes)
                         packet.DataSize = (Int16)(data.Count - PacketHeaderSize);
@@ -132,12 +141,9 @@ namespace echoClient_csharp
                         // Get packet type (fifth byte)
                         packet.Type = (SByte)data.Array[(data.Offset + 4)];
 
-                        // Get packet error code
-                        packet.ErrorCde = BitConverter.ToInt16(data.Array, data.Offset + 5);
-
                         // Get packet body (the following)
                         packet.BodyData = new byte[packet.DataSize];
-                        Buffer.BlockCopy(data.Array, (data.Offset + PacketHeaderSize + PacketErrorCodeSize), packet.BodyData, 0, packet.DataSize);
+                        Buffer.BlockCopy(data.Array, (data.Offset + PacketHeaderSize), packet.BodyData, 0, packet.DataSize);
 
                         lock (((System.Collections.ICollection)RecvPacketQueue).SyncRoot)
                         {
@@ -247,11 +253,16 @@ namespace echoClient_csharp
 
         public void SetDisconnectd()
         {
-            if (btnConnect.Enabled == false)
-            {
-                btnConnect.Enabled = true;
-                btnDisconnect.Enabled = false;
-            }
+
+            btnConnect.Enabled = true;
+            btnDisconnect.Enabled = false;
+            btnEchoSend.Enabled = false;
+            btnLogout.Enabled = false;
+            btnEnter.Enabled = false;
+            btnLeave.Enabled = false;
+            btnCreate.Enabled = false;
+
+            ClearRoomInfo();
 
             SendPacketQueue.Clear();
 
@@ -296,11 +307,189 @@ namespace echoClient_csharp
                 return;
             }
 
+            /* previous packet format code
             var body = Encoding.UTF8.GetBytes(echoMsg.Text);
 
             PostSendPacket(PACKET_ID.PACKET_ID_ECHO_REQ, body);
+            */
 
-            Log.Write($"Echo req:  {echoMsg.Text}, {body.Length}");
+            Echo reqPkt = new Echo { Msg = echoMsg.Text };
+
+            var body = reqPkt.ToByteArray();
+            PostSendPacket(PACKET_ID.PACKET_ID_ECHO_REQ, body);
+
+            Log.Write($"Echo req:  {reqPkt.Msg}, {body.Length}");
+        }
+
+        void AddRoomUserList(Int64 userUniqueId, string userID)
+        {
+            var msg = $"{userUniqueId}: {userID}";
+            userList.Items.Add(msg);
+        }
+
+        void RemoveRoomUserList(Int64 userUniqueId)
+        {
+            foreach (var user in userList.Items)
+            {
+                var items = user.ToString().Split(':');
+                Int64.TryParse(items[0], out long id);
+                if (id == userUniqueId)
+                {
+                    userList.Items.Remove(user);
+                    return;
+                }
+            }
+        }
+
+        void AddRoomChatMessageList(Int64 userUniqueId, string msgssage)
+        {
+            string UserId = "None";
+            foreach (var user in userList.Items)
+            {
+                var items = user.ToString().Split(':');
+                Int64.TryParse(items[0], out long id);
+                if (id == userUniqueId)
+                {
+                    UserId = user.ToString();
+                    break;
+                }
+            }
+
+            var msg = $"[{UserId}] : {msgssage}";
+
+            if (chatLog.Items.Count > 512)
+            {
+                chatLog.Items.Clear();
+            }
+
+            chatLog.Items.Add(msg);
+            chatLog.SelectedIndex = chatLog.Items.Count - 1;
+        }
+
+        private void ClearRoomInfo()
+        {
+            roomNumber.Text = "0";
+            roomTitle.Text = "Title";
+            roomLabel.Text = "";
+            curRoomNumberLabel.Text = "";
+            userList.Items.Clear();
+            chatLog.Items.Clear();
+            chat.Text = "";
+        }
+
+        private void BtnLogin_Click(object sender, EventArgs e)
+        {
+            /* previous packet format code
+            var loginReq = new LoginReqPacket();
+            loginReq.SetValue(idText.Text, pwText.Text);
+            
+            PostSendPacket(PACKET_ID.PACKET_ID_LOGIN_REQ, loginReq.ToBytes());
+            */
+
+            LoginReq reqPkt = new LoginReq
+            {
+                Id = idText.Text,
+                Pw = pwText.Text,
+            };
+
+            PostSendPacket(PACKET_ID.PACKET_ID_LOGIN_REQ, reqPkt.ToByteArray());
+
+            Log.Write($"로그인 요청:  {reqPkt.Id}, {reqPkt.Pw}");
+        }
+
+        private void BtnEnter_Click(object sender, EventArgs e)
+        {
+            /* previous packet format code
+            var requestPkt = new RoomEnterReqPacket();
+            Int16.TryParse(roomNumber.Text, out Int16 roomNum);
+
+            requestPkt.SetValue(false, roomNum, "");
+
+            PostSendPacket(PACKET_ID.PACKET_ID_ROOM_ENTER_REQ, requestPkt.ToBytes());
+            */
+
+            Int32.TryParse(roomNumber.Text, out Int32 roomNum);
+            RoomEnterReq reqPkt = new RoomEnterReq
+            {
+                IsCreate = false,
+                RoomIndex = roomNum,
+                RoomTitle = "",
+            };
+
+            PostSendPacket(PACKET_ID.PACKET_ID_ROOM_ENTER_REQ, reqPkt.ToByteArray());
+
+            Log.Write($"방 입장 요청:  {roomNumber.Text} 번");
+        }
+
+        private void BtnLeave_Click(object sender, EventArgs e)
+        {
+            // No packet needed
+            PostSendPacket(PACKET_ID.PACKET_ID_ROOM_LEAVE_REQ, null);
+            Log.Write($"방 퇴장 요청:  {roomNumber.Text} 번");
+        }
+
+        private void BtnCreate_Click(object sender, EventArgs e)
+        {
+            if (roomTitle.TextLength == 0)
+            {
+                MessageBox.Show("방 이름을 입력하세요");
+                return;
+            }
+
+            if (roomTitle.TextLength > PacketDef.MAX_ROOM_TITLE_LENGTH)
+            {
+                MessageBox.Show($"최대 {PacketDef.MAX_ROOM_TITLE_LENGTH} 글자까지 입력하세요");
+                return;
+            }
+
+            /* previous packet format code
+            var requestPkt = new RoomEnterReqPacket();
+            requestPkt.SetValue(true, 0, roomTitle.Text);
+
+            PostSendPacket(PACKET_ID.PACKET_ID_ROOM_ENTER_REQ, requestPkt.ToBytes());
+            */
+
+            RoomEnterReq reqPkt = new RoomEnterReq
+            {
+                IsCreate = true,
+                RoomTitle = roomTitle.Text,
+            };
+
+            PostSendPacket(PACKET_ID.PACKET_ID_ROOM_ENTER_REQ, reqPkt.ToByteArray());
+
+            Log.Write($"방 생성 요청");
+        }
+
+        private void BtnChat_Click(object sender, EventArgs e)
+        {
+            if (chat.Text.Length == 0)
+            {
+                MessageBox.Show("채팅 메시지를 입력하세요");
+                return;
+            }
+
+            /* previous packet format code
+            var requestPkt = new RoomChatReqPacket();
+            requestPkt.SetValue(chat.Text);
+
+            PostSendPacket(PACKET_ID.PACKET_ID_ROOM_CHAT_REQ, requestPkt.ToBytes());
+            */
+
+            RoomChatReq reqPkt = new RoomChatReq
+            {
+                Msg = chat.Text.Trim(),
+            };
+
+            PostSendPacket(PACKET_ID.PACKET_ID_ROOM_CHAT_REQ, reqPkt.ToByteArray());
+
+            Log.Write($"방 채팅 요청");
+        }
+
+        private void BtnLogout_Click(object sender, EventArgs e)
+        {
+            // No packet needed
+            PostSendPacket(PACKET_ID.PACKET_ID_LOGOUT_REQ, null);
+            Log.Write($"로그아웃 요청");
         }
     }
 }

@@ -6,35 +6,31 @@
 
 #include "Log.h"
 #include "Session.h"
-#include "IServer.h"
+#include "INetwork.h"
 #include "AsyncIOException.h"
 
 class SessionManager
 {
 public:
 	SessionManager() = delete;
-	SessionManager(
-		const INT sessionNum
-		, SessionConfig sessionConfig
-		, PacketBufferConfig pktBufferConfig
-		, Log* const pLog);
+	SessionManager(const int sessionNum, const PacketBufferConfig pktBufferConfig, Log* const pLog);
+	~SessionManager();
 
-	bool retrieveId(INT& _out_sessionId);
-	void returnId(INT sessionId);
+	bool retrieveId(int& _out_sessionId);
+	void returnId(int sessionId);
 
-	SESSIONDESC& GetSessionDescRef(INT sessionId);
-	SESSION* GetSessionPtr(INT sessionId);
+	SESSION* GetSessionPtr(int sessionId);
 
-	DWORD PostRecv(SESSION* session);
-	DWORD PostSend(SESSION* session, size_t length);
+	NET_ERROR_CODE PostRecv(SESSION* session);
+	NET_ERROR_CODE PostSend(SESSION* session, int length);
 
 private:
-	using cqueue = Concurrency::concurrent_queue<INT>;
-	INT				m_IOBufMaxSize;
-	INT				m_SessionNumber;
+	using cqueue = Concurrency::concurrent_queue<int>;
+	int				m_IOBufMaxSize;
+	int				m_SessionNumber;
 	cqueue			m_SessionIdPool;
 	std::vector<SESSION*>	m_SessionPool;
 	std::atomic_int			m_ConnectedSessionNumber;
 
-	Log* m_Log;
+	Log* m_pLogger;
 };

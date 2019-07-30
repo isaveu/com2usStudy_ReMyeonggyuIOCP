@@ -2,13 +2,12 @@
 
 #include <concurrent_queue.h>
 
-#include "../lsbIOCP/Struct.h"
-
-#include "Packet.h"
+#include "../lsbIOCP/Define.h"
+#include "Common/Packet.h"
 #include "LogicConfig.h"
 
 class Log;
-class AsyncIOServer;
+class AsyncIONetwork;
 
 namespace lsbLogic
 {
@@ -17,51 +16,48 @@ namespace lsbLogic
 	class ConnectedUserManager;
 	class PacketProcess;
 
-	class LogicMain : public IServerReceiver
+	class LogicMain : public INetworkReceiver
 	{
-	public:
-		ServerConfig m_Config;
-
 	public:
 		void Start();
 		void Stop();
 		void Run();
 
 		// Manager pointer
-		void Init(ServerConfig m_SConfig, LogicConfig m_LConfig);
+		void Init(LogicConfig m_Config);
 
-		void SendMsg(const int sessionId, const short packetId, const short length, char* data);
+		void SendMsg(const int sessionId, const short packetId, const short length, char* pData, Message* pProto);
+		void SendProto(const int sessionId, const short packetId, Message* pProto);
 		void ForceClose(const int sessionId);
 		void ConnectServer(const int reqId, const char* ip, unsigned short port);
 
 	private:
-		/**************************************** IServerReceiver ****************************************/
+		/**************************************** INetworkReceiver ****************************************/
 		// Triggered when client socket is connected
-		void NotifyClientConnected(SESSIONDESC& sessionDesc) override;
+		void NotifyClientConnected(const int sessionId) override;
 
 		// Triggered when socket is disconnected
-		void NotifyClientDisconnected(INT sessionId) override;
+		void NotifyClientDisconnected(const int sessionId) override;
 
 		// Triggered when server get message from client
-		bool NotifyMessage(SESSIONDESC& sessionDesc, size_t nBytes, char* pData) override;
+		bool NotifyMessage(const int sessionId, const int nBytes, char* const pData) override;
 
 		// Triggered when the job of connecting to other server is completed
-		void NotifyServerConnectingResult(SESSIONDESC& session, INT requrestId, DWORD error) override;
+		void NotifyServerConnectingResult(const int sessionId, const int requrestId, const NET_ERROR_CODE error) override;
 
 	private:
-		AsyncIOServer* m_pNetwork;
+		AsyncIONetwork* m_pNetwork;
 		UserManager* m_pUserMngr;
 		RoomManager* m_pRoomMngr;
 		ConnectedUserManager* m_pConnUserMngr;
 		PacketProcess* m_pPktProc;
 
-		ServerConfig m_SConfig;
-		LogicConfig m_LConfig;
+		LogicConfig m_Config;
 
 		bool m_IsRun = false;
 
 		Concurrency::concurrent_queue<PacketInfo> m_PacketQueue;
 
-		Log* m_Log;
+		Log* m_pLogger;
 	};
 }

@@ -103,6 +103,8 @@
       <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(ProjectDir)../protobuf/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,16 +148,16 @@
   <ItemGroup>
     <ClInclude Include="Acceptor.h" />
     <ClInclude Include="AsyncIOException.h" />
-    <ClInclude Include="AsyncIOServer.h" />
+    <ClInclude Include="AsyncIONetwork.h" />
     <ClInclude Include="conmanip.h" />
     <ClInclude Include="ErrorCode.h" />
     <ClInclude Include="ILog.h" />
-    <ClInclude Include="IServer.h" />
+    <ClInclude Include="INetwork.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Session.h" />
     <ClInclude Include="SessionManager.h" />
     <ClInclude Include="PacketBufferManager.h" />
-    <ClInclude Include="Struct.h" />
+    <ClInclude Include="Define.h" />
     <ClInclude Include="Thread.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Worker.h" />
@@ -163,8 +165,8 @@
   <ItemGroup>
     <ClCompile Include="Acceptor.cpp" />
     <ClCompile Include="AsyncIOException.cpp" />
-    <ClCompile Include="AsyncIOServer.cpp" />
-    <ClCompile Include="AsyncIOServerController.cpp" />
+    <ClCompile Include="AsyncIONetwork.cpp" />
+    <ClCompile Include="AsyncIONetworkController.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="SessionManager.cpp" />
     <ClCompile Include="Thread.cpp" />

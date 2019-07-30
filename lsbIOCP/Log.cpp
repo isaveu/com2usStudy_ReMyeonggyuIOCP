@@ -44,6 +44,9 @@ void Log::Write(const LOG_LEVEL logLevel, const char* pFormat, ...)
 	vsprintf_s(szText, MAX_LOG_STRING_LENGTH, pFormat, args);
 	va_end(args);
 
+	// Is iofstream thread safe ?
+	// https://stackoverflow.com/questions/20211935/is-ofstream-thread-safe
+	std::lock_guard<std::mutex> lock(m_Lock);
 	Log::Flush(szText, logLevel);
 }
 
@@ -61,10 +64,6 @@ void Log::Flush(const char* logMsg, LOG_LEVEL logLevel)
 	ss.str(std::string());
 	ss << "./Log/" << m_FileName << "_" << date << ".txt";
 	std::string filePath = ss.str();
-
-	// Is iofstream thread safe ?
-	// https://stackoverflow.com/questions/20211935/is-ofstream-thread-safe
-	std::lock_guard<std::mutex> lock(m_Lock);
 
 	// Fail if there dosen't exist dir in path
 	std::ofstream out(filePath, std::ios_base::out | std::ios_base::app);

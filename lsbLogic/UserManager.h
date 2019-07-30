@@ -6,7 +6,7 @@
 #include <map>
 
 #include "User.h"
-#include "ErrorCode.h"
+#include "Common/ErrorCode.h"
 
 using ERROR_CODE = lsbLogic::ERROR_CODE;
 
@@ -30,6 +30,6 @@ namespace lsbLogic
 		std::vector<User>	m_UserPool;
 		std::deque<int>		m_UserPoolIndex;
 		std::map<int, User*>	m_SessionUserDic;
-		std::map<const char*, User*>	m_IdUserDic;
+		std::map<std::string, User*>	m_IdUserDic;
 	};
 }

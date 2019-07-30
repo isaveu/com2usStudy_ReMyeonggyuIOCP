@@ -1,3 +1,6 @@
+#include <windows.h>
+#include <time.h>
+
 #include "Utils.h"
 
 // 시간 처리
@@ -39,4 +42,17 @@ std::string utils::Format(const char* format, ...)
 	va_end(marker);
 
 	return std::string(szbuff);
+}
+
+// Bit converter
+template<typename T>
+T* utils::BytesToType(char* const pBytes, const int index)
+{
+	return reinterpret_cast<T*>(pBytes + index);
+}
+
+template<typename T>
+char* utils::TypeToBytes(T* const pData)
+{
+	return reinterpret_cast<char*>(pData);
 }

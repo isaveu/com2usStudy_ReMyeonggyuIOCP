@@ -24,7 +24,7 @@ namespace lsbLogic
 	class ConnectedUserManager
 	{
 	public:
-		void Init(IServerController* pController, const int maxSessionCount, bool IsLoginChk, Log* pLogger)
+		void Init(INetworkController* pController, const int maxSessionCount, bool IsLoginChk, Log* pLogger)
 		{
 			m_Log = pLogger;
 			m_pController = pController;
@@ -50,6 +50,11 @@ namespace lsbLogic
 		void SetDisConnectSession(const int sessionIndex)
 		{
 			ConnectedUserList[sessionIndex].Clear();
+		}
+
+		void SetLogout(const int sessionIndex)
+		{
+			ConnectedUserList[sessionIndex].m_IsLoginSuccess = false;
 		}
 
 		// TODO: 따로 스레드를 돌리되 처리할 내용이 있으면
@@ -99,7 +104,7 @@ namespace lsbLogic
 				}
 
 				auto diff = curSecTime - ConnectedUserList[i].m_ConnectedTime;
-				if (diff >= 180)
+				if (diff >= 3600)
 				{
 					m_Log->Write(LOG_LEVEL::WARN, "%s | Login Wait Time Over. sessionIndex(%d).", __FUNCTION__, i);
 					m_pController->DisconnectSocket(i);
@@ -109,7 +114,7 @@ namespace lsbLogic
 
 	private:
 		ILog* m_Log;
-		IServerController* m_pController;
+		INetworkController* m_pController;
 
 		std::vector<ConnectedUser> ConnectedUserList;
 

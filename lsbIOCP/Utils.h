@@ -1,7 +1,5 @@
 #pragma once
 
-#include <windows.h>
-#include <time.h>
 #include <string>
 
 namespace utils {
@@ -10,4 +8,11 @@ namespace utils {
 	std::string GetTime();
 
 	std::string Format(const char* format, ...);
+
+	// Bit converter
+	template<typename T>
+	T* BytesToType(char* const pBytes, const int index);
+
+	template<typename T>
+	char* TypeToBytes(T* const pData);
 }

@@ -1,30 +1,20 @@
 #pragma once
 
-#include "Struct.h"
+#include "Define.h"
 #include "PacketBufferManager.h"
-
-class SessionConfig
-{
-public:
-	INT ioBufMaxSize;
-	IServerController* pController;
-};
 
 // Session struct including Session descriptor
 class SESSION
 {
 public:
 	SESSION() = default;
-	SESSION(SessionConfig sessionConfig, PacketBufferConfig pktBufferConfig)
+	SESSION(PacketBufferConfig packetBufferConfig)
 	{
-		m_SessionDesc.pController = sessionConfig.pController;
-		m_pOverlappedRecv = new OVERLAPPED_EX(pktBufferConfig, OP_TYPE::RECV);
-		m_pOverlappedSend = new OVERLAPPED_EX(pktBufferConfig, OP_TYPE::SEND);
+		m_pOverlappedRecv = new OVERLAPPED_EX(packetBufferConfig, OP_TYPE::RECV);
+		m_pOverlappedSend = new OVERLAPPED_EX(packetBufferConfig, OP_TYPE::SEND);
 		m_pOverlappedConn = new OVERLAPPED_EX();
 		m_RefCount.store(0);
 		m_IsOpened.store(false);
-
-		m_SessionDesc.m_pPacketBuffer->Init(pktBufferConfig);
 	}
 	~SESSION()
 	{
@@ -38,19 +28,24 @@ public:
 		return m_SocketId;
 	}
 
-	void SetController(IServerController* pController)
+	void SetSessionId(int id)
 	{
-		m_SessionDesc.pController = pController;
+		m_SessionId = id;
 	}
 
-	void SetSessionId(INT id)
+	void Clear()
 	{
-		m_SessionDesc.id = id;
+		m_SocketId = 0;
+		m_RefCount.store(0);
+		m_IsOpened.store(false);
+		m_pOverlappedConn->Clear();
+		m_pOverlappedRecv->Clear();
+		m_pOverlappedSend->Clear();
 	}
 
-	INT GetSessionId()
+	int GetSessionId()
 	{
-		return m_SessionDesc.id;
+		return m_SessionId;
 	}
 
 	OVERLAPPED_EX* GetOverlapped(OP_TYPE type)
@@ -62,11 +57,6 @@ public:
 		case OP_TYPE::RECV: return m_pOverlappedRecv;
 		case OP_TYPE::SEND: return m_pOverlappedSend;
 		}
-	}
-
-	SESSIONDESC& GetSessionDescRef()
-	{
-		return m_SessionDesc;
 	}
 
 	void SetSocket(SOCKET socket)
@@ -105,9 +95,8 @@ public:
 	std::mutex			m_SendLock;
 
 private:
-	SESSIONDESC			m_SessionDesc;
-
-	SOCKET				m_SocketId = 0;
+	int		m_SessionId = -1;
+	SOCKET	m_SocketId = 0;
 
 	// atomic is not copyable or movable
 	// atomic(const atomic&) = delete;

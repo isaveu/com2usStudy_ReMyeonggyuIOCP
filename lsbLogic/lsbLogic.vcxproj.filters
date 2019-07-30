@@ -16,17 +16,14 @@
     <Filter Include="헤더 파일\Common">
       <UniqueIdentifier>{64379cbb-bb88-4998-82db-ee5cb22e27d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Protobuf">
+      <UniqueIdentifier>{031749e4-41a4-428a-8d62-266e2e1c4675}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Protobuf">
+      <UniqueIdentifier>{1a120c8d-06ed-418c-952f-ab72e8879137}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Packet.h">
-      <Filter>헤더 파일\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="PacketID.h">
-      <Filter>헤더 파일\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="ErrorCode.h">
-      <Filter>헤더 파일\Common</Filter>
-    </ClInclude>
     <ClInclude Include="PacketProcess.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -50,6 +47,18 @@
     </ClInclude>
     <ClInclude Include="LogicConfig.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\ErrorCode.h">
+      <Filter>헤더 파일\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\Packet.h">
+      <Filter>헤더 파일\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\PacketID.h">
+      <Filter>헤더 파일\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Protobuf\Packet.pb.h">
+      <Filter>헤더 파일\Protobuf</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -76,6 +85,9 @@
     </ClCompile>
     <ClCompile Include="PacketProcessRoom.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Protobuf\Packet.pb.cc">
+      <Filter>소스 파일\Protobuf</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

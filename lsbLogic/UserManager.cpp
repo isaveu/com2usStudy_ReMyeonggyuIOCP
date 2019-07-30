@@ -35,7 +35,8 @@ namespace lsbLogic
 
 	ERROR_CODE UserManager::AddUser(const int sessionId, const char* id)
 	{
-		if (m_IdUserDic.find(id) != m_IdUserDic.end())
+		auto idString = std::string(id);
+		if (m_IdUserDic.find(idString) != m_IdUserDic.end())
 		{
 			return ERROR_CODE::USER_MGR_ID_DUPLICATION;
 		}
@@ -48,7 +49,7 @@ namespace lsbLogic
 
 		pUser->Set(sessionId, id);
 		m_SessionUserDic.insert({ sessionId, pUser });
-		m_IdUserDic.insert({ id, pUser });
+		m_IdUserDic.insert({ idString, pUser });
 
 		return ERROR_CODE::NONE;
 	}
@@ -63,9 +64,9 @@ namespace lsbLogic
 		}
 
 		ReleaseUser(pUser->GetIndex());
+		m_IdUserDic.erase(pUser->GetId());
 		pUser->Clear();
 		m_SessionUserDic.erase(sessionId);
-		m_IdUserDic.erase(pUser->GetId().c_str());
 
 		return ERROR_CODE::NONE;
 	}

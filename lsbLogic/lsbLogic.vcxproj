@@ -42,7 +42,7 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -88,6 +88,9 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)../protobuf/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,13 +127,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Common\ErrorCode.h" />
+    <ClInclude Include="Common\Packet.h" />
+    <ClInclude Include="Common\PacketID.h" />
     <ClInclude Include="LogicConfig.h" />
     <ClInclude Include="ConnectedUserManager.h" />
-    <ClInclude Include="ErrorCode.h" />
     <ClInclude Include="LogicMain.h" />
-    <ClInclude Include="Packet.h" />
-    <ClInclude Include="PacketID.h" />
     <ClInclude Include="PacketProcess.h" />
+    <ClInclude Include="Protobuf\Packet.pb.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="RoomManager.h" />
     <ClInclude Include="User.h" />
@@ -142,6 +146,7 @@
     <ClCompile Include="PacketProcess.cpp" />
     <ClCompile Include="PacketProcessLogin.cpp" />
     <ClCompile Include="PacketProcessRoom.cpp" />
+    <ClCompile Include="Protobuf\Packet.pb.cc" />
     <ClCompile Include="Room.cpp" />
     <ClCompile Include="RoomManager.cpp" />
     <ClCompile Include="UserManager.cpp" />

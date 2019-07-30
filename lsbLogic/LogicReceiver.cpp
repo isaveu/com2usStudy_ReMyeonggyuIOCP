@@ -2,15 +2,15 @@
 
 namespace lsbLogic
 {
-	void LogicMain::NotifyClientConnected(SESSIONDESC& sessionDesc)
+	void LogicMain::NotifyClientConnected(const int sessionId)
 	{
 		PacketInfo packet;
-		packet.SessionId = sessionDesc.id;
+		packet.SessionId = sessionId;
 		packet.PacketId = static_cast<short>(PACKET_ID::NTF_SYS_CONNECT_SESSION);
 		m_PacketQueue.push(packet);
 	}
 
-	void LogicMain::NotifyClientDisconnected(INT sessionId) 
+	void LogicMain::NotifyClientDisconnected(int sessionId) 
 	{
 		PacketInfo packet;
 		packet.SessionId = sessionId;
@@ -18,7 +18,7 @@ namespace lsbLogic
 		m_PacketQueue.push(packet);
 	}
 
-	bool LogicMain::NotifyMessage(SESSIONDESC& sessionDesc, size_t size, char* data)
+	bool LogicMain::NotifyMessage(const int sessionId, const int size, char* const data)
 	{
 		// 유저의 recv 패킷 버퍼에 write (packetBufferManager 이용)
 		// 유저의 recv 패킷 버퍼를 읽어서 하나의 패킷 단위 이상 들어왔을 경우 process
@@ -38,7 +38,7 @@ namespace lsbLogic
 		}
 
 		PacketInfo packet;
-		packet.SessionId = sessionDesc.id;
+		packet.SessionId = sessionId;
 		packet.PacketId = pPktHeader->Id;
 		packet.PacketBodySize = pPktHeader->PacketSize - PACKET_HEADER_SIZE;
 		packet.pData = data + PACKET_HEADER_SIZE;
@@ -48,11 +48,11 @@ namespace lsbLogic
 		return true;
 	}
 
-	void LogicMain::NotifyServerConnectingResult(SESSIONDESC& sessionDesc, INT requestId, DWORD error)
+	void LogicMain::NotifyServerConnectingResult(const int sessionId, const int requestId, const NET_ERROR_CODE error)
 	{
-		if (error != FALSE)
+		if (error != NET_ERROR_CODE::NONE)
 			printf("connecting fail, error %d\n", error);
 		else
-			printf("connecting successfully session id : %d, req Id : %d\n", sessionDesc.id, requestId);
+			printf("connecting successfully session id : %d, req Id : %d\n", sessionId, requestId);
 	}
 }

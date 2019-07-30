@@ -1,15 +1,14 @@
 #pragma once
 
-#include "..//lsbIOCP/IServer.h"
-#include "..//lsbIOCP/AsyncIOServer.h"
+#include "..//lsbIOCP/INetwork.h"
+#include "..//lsbIOCP/AsyncIONetwork.h"
 
 #include "ConnectedUserManager.h"
 #include "RoomManager.h"
 #include "UserManager.h"
-#include "Packet.h"
-#include "ErrorCode.h"
-
-using ERROR_CODE = lsbLogic::ERROR_CODE;
+#include "Common/Packet.h"
+#include "Common/ErrorCode.h"
+#include "Protobuf/Packet.pb.h"
 
 namespace lsbLogic
 {
@@ -19,11 +18,9 @@ namespace lsbLogic
 		PacketFunc PacketFuncArray[static_cast<int>(PACKET_ID::MAX)];
 
 	public:
-		void Init(
-			LogicMain* const m_pLogicMain
+		void Init(LogicMain* const m_pLogicMain
 			, UserManager* const pUserMngr
 			, RoomManager* const pConfig
-			, ServerConfig serverConfig
 			, ConnectedUserManager* pConnUsrMngr
 			, Log* const pLogger);
 
@@ -36,9 +33,10 @@ namespace lsbLogic
 		UserManager* m_pUserMngr;
 		RoomManager* m_pRoomMngr;
 		ConnectedUserManager* m_pConnectedUserManager;
-		ServerConfig m_ServerConfig;
 
 	private:
+		bool ParseDataToProto(Message* pProto, char* pData, short size);
+
 		ERROR_CODE NtfSysConnctSession(PacketInfo packetInfo);
 
 		ERROR_CODE NtfSysCloseSession(PacketInfo packetInfo);

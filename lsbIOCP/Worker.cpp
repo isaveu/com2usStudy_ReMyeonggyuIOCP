@@ -1,24 +1,25 @@
 #include "Worker.h"
-
-#include "AsyncIOServer.h"
+#include "Session.h"
+#include "AsyncIONetwork.h"
 
 Worker::Worker(
-	IServerReceiver* const pReceiver,
+	INetworkReceiver* const pReceiver,
 	const HANDLE iocpHandle,
 	SessionManager* const pSessionManager,
-	AsyncIOServer* const pServer,
+	AsyncIONetwork* const pServer,
 	Log* const pLog)
 	: m_pReceiver(pReceiver)
 	, m_IOCPHandle(iocpHandle)
 	, m_pSessionManager(pSessionManager)
 	, m_pServer(pServer)
-	, m_Log(pLog) {}
+	, m_pLogger(pLog) {}
 
 // Handle all of completed IOCP queue jobs from GQCSEX
 void Worker::HandleCompletion()
 {
 	constexpr ULONG		maxRemoveCount = 2;
 	constexpr BOOL		alertable = FALSE;
+	constexpr DWORD		waitTime = INFINITE;
 	ULONG	removedNumber;
 	OVERLAPPED_ENTRY completionPortEntries[maxRemoveCount];
 
@@ -30,7 +31,7 @@ void Worker::HandleCompletion()
 			completionPortEntries,
 			maxRemoveCount,
 			&removedNumber,
-			INFINITE,
+			waitTime,
 			alertable);
 
 		// Process completed job
@@ -38,7 +39,7 @@ void Worker::HandleCompletion()
 		{
 			auto nBytes = completionPortEntries[i].dwNumberOfBytesTransferred;
 			auto lpOverlapped = completionPortEntries[i].lpOverlapped;
-			auto sessionId = static_cast<INT>(completionPortEntries[i].lpCompletionKey);
+			auto sessionId = static_cast<int>(completionPortEntries[i].lpCompletionKey);
 
 			if (res == FALSE)
 			{
@@ -53,16 +54,19 @@ void Worker::HandleCompletion()
 }
 
 // Process IO job having error
-void Worker::DispatchError(DWORD error, LPOVERLAPPED lpOverlapped, INT id)
+void Worker::DispatchError(DWORD error, LPOVERLAPPED lpOverlapped, int sessionId)
 {
-	if (error == WAIT_TIMEOUT) return;
+	if (error == WAIT_TIMEOUT)
+	{
+		return;
+	}
 
-	m_Log->Write(LV::ERR, "#%u Dispatch Error", error);
+	m_pLogger->Write(LV::ERR, "[ERROR #%u] Dispatch Error", error);
 
 	auto overlappedEx = reinterpret_cast<OVERLAPPED_EX*>(lpOverlapped);
 	if (overlappedEx == nullptr)
 	{
-		m_Log->Write(LV::ERR, "#%u overlapped is null", error);
+		m_pLogger->Write(LV::ERR, "[ERROR #%u] overlapped is null", error);
 		return;
 	}
 
@@ -73,17 +77,16 @@ void Worker::DispatchError(DWORD error, LPOVERLAPPED lpOverlapped, INT id)
 		// https://siminq.tistory.com/entry/%EC%B0%B8%EC%A1%B0%EC%9E%90%EB%A5%BC-%EB%A6%AC%ED%84%B4%ED%95%98%EB%8A%94-%ED%95%A8%EC%88%98-%EC%9D%B4%ED%95%B4-%EC%89%BD%EA%B2%8C-%ED%95%98%EA%B8%B0
 		// atmoic은 ref 사용 불허
 		auto reqId = overlappedEx->requesterId;
-		auto sessionDesc = m_pSessionManager->GetSessionDescRef(id);
-		m_pReceiver->NotifyServerConnectingResult(sessionDesc, reqId, error);
-		m_Log->Write(LV::ERR, "Can not connect to server");
+		m_pReceiver->NotifyServerConnectingResult(sessionId, reqId, NET_ERROR_CODE::FAIL_CONNECTEX_PENDIG_JOB);
+		m_pLogger->Write(LV::ERR, "[ERROR #%u] Can not connect to server", error);
 	}
 
 	// This connection has problem, so disconnect
-	m_pServer->UnlinkSocketToSession(id, error);
+	m_pServer->UnlinkSocketToSession(sessionId, NET_ERROR_CODE::DISPATCH_ERROR);
 }
 
 // Process completed IO job
-void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, INT sessionId)
+void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOverlapped, int sessionId)
 {
 	auto overlappedEx = reinterpret_cast<OVERLAPPED_EX*>(lpOverlapped);
 	auto session = m_pSessionManager->GetSessionPtr(sessionId);
@@ -91,11 +94,9 @@ void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOv
 	// already socket disconnected
 	if (session->IsOpened() == false)
 	{
-		m_Log->Write(LV::ERR, "Already disconnected connection");
+		m_pLogger->Write(LV::ERR, "Already disconnected connection");
 		return;
 	}
-
-	auto sessionDesc = session->GetSessionDescRef();
 
 	switch (overlappedEx->type)
 	{
@@ -106,18 +107,18 @@ void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOv
 		// So, session is opend after setsockopt()
 		if (setsockopt(session->GetSocket(), SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0) != FALSE)
 		{ 
-			auto lastError = ::GetLastError();
-			m_pReceiver->NotifyServerConnectingResult(sessionDesc, overlappedEx->requesterId, lastError);
-			m_pServer->UnlinkSocketToSession(sessionId, lastError);
+			m_pLogger->Write(LV::ERR, "[ERROR #%u] Can not set socket option", ::GetLastError());
+			m_pReceiver->NotifyServerConnectingResult(sessionId, overlappedEx->requesterId, NET_ERROR_CODE::FAIL_SETSOCKOPT);
+			m_pServer->UnlinkSocketToSession(sessionId, NET_ERROR_CODE::FAIL_SETSOCKOPT);
 		}
 		else
 		{
 			// If job goes smoothly, post WSARecv
-			m_pReceiver->NotifyServerConnectingResult(sessionDesc, overlappedEx->requesterId, NULL);
+			m_pReceiver->NotifyServerConnectingResult(sessionId, overlappedEx->requesterId, NET_ERROR_CODE::NONE);
 			auto error = m_pSessionManager->PostRecv(session);
-			if (error != FALSE)
+			if (error != NET_ERROR_CODE::NONE)
 			{
-				m_Log->Write(LV::ERR, "#%u PostRecv failed", error);
+				m_pLogger->Write(LV::ERR, "[NET_ERROR #%d] PostRecv failed", error);
 				m_pServer->UnlinkSocketToSession(sessionId, error);
 				return;
 			}
@@ -130,21 +131,29 @@ void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOv
 		if (transferredBytesNumber == 0)
 		{
 			// If get zero bytes, disconnect
-			m_pServer->UnlinkSocketToSession(sessionId, NULL);
+			m_pServer->UnlinkSocketToSession(sessionId, NET_ERROR_CODE::NONE);
 		}
 		else
 		{
-			overlappedEx->bufferMngr.IncreseWrtiePos(transferredBytesNumber);
-			overlappedEx->bufferMngr.PreventBufferOverflow();
+			auto isSuccess = overlappedEx->bufferMngr.IncreseWrtiePos(transferredBytesNumber);
+			if (isSuccess == false)
+			{
+				// 서버가 Recv한 데이터를 처리하지 못하고 버퍼가 가득차있는 경우... 서버에 무슨 문제가???
+				m_pServer->UnlinkSocketToSession(sessionId, NET_ERROR_CODE::PACKET_BUFFER_FULL);
+				return;
+			}
 
-			auto pData = overlappedEx->bufferMngr.ReadCurret();
+			auto pData = overlappedEx->bufferMngr.Read(transferredBytesNumber);
 
 			// If got messages, notify to server
-			auto res = m_pReceiver->NotifyMessage(sessionDesc, transferredBytesNumber, pData);
+			auto ret = m_pReceiver->NotifyMessage(sessionId, transferredBytesNumber, pData);
 
-			if (res)
+			// 서버에서 데이터를 읽어갔다면 읽음 표시처리
+			// TODO: 지금은 데이터를 읽고 난 후 패킷 body 포인터를 패킷 처리 스레드로 넘겨줄 뿐 해당 패킷 바디데이터가 언제 사용완료 될지 모름
+			// 만약 패킷 처리가 늦고, Recv하는 데이터가 많아진다면 아직 처리되지 않은 패킷의 body 데이터가 덮어씌워질 수 있음
+			if (ret)
 			{
-				overlappedEx->bufferMngr.IncreseReadPos(transferredBytesNumber);
+				overlappedEx->bufferMngr.ReadComplete(transferredBytesNumber);
 			}
 			// And post WSARecv again
 			m_pSessionManager->PostRecv(session);
@@ -153,11 +162,13 @@ void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOv
 
 		// Send message job
 	case OP_TYPE::SEND:
-		overlappedEx->bufferMngr.IncreseReadPos(transferredBytesNumber);
+		// 버퍼 데이터를 성공적으로 소켓 버퍼로 내려보냄
+		// 버퍼읽기 커서를 재정의하여 공간 재사용
+		overlappedEx->bufferMngr.ReadComplete(transferredBytesNumber);
 		break;
 
 	default:
-		m_Log->Write(LV::ERR, "Overlapped has no type");
+		m_pLogger->Write(LV::ERR, "Overlapped has no type");
 		break;
 	}
 
@@ -186,5 +197,5 @@ void Worker::DispatchCompleteion(DWORD transferredBytesNumber, LPOVERLAPPED lpOv
 void Worker::Run()
 {
 	Worker::HandleCompletion();
-	m_Log->Write(LV::INFO, "[%d] thread stoped handling completion job", ::GetCurrentThreadId());
+	m_pLogger->Write(LV::INFO, "[Thread %d] Stoped handling completion job", ::GetCurrentThreadId());
 }
