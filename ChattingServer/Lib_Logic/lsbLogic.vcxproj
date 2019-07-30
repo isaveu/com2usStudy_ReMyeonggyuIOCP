@@ -152,7 +152,7 @@
     <ClCompile Include="UserManager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\lsbIOCP\lsbIOCP.vcxproj">
+    <ProjectReference Include="..\..\Lib_NetworkIOCP\lsbIOCP.vcxproj">
       <Project>{c4319b70-024b-4081-9966-6c4c8e1d0727}</Project>
     </ProjectReference>
   </ItemGroup>

@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.29025.244
+VisualStudioVersion = 16.0.29102.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "echoServer", "echoServer.vcxproj", "{E30DF150-E158-4BAF-932A-6036DE8F9B73}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Console", "Console.vcxproj", "{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lsbLogic", "..\Lib_Logic\lsbLogic.vcxproj", "{8DADB2AE-8359-47AD-9F26-0472E3F0FD3B}"
 EndProject
@@ -17,14 +17,14 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Debug|x64.ActiveCfg = Debug|x64
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Debug|x64.Build.0 = Debug|x64
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Debug|x86.ActiveCfg = Debug|Win32
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Debug|x86.Build.0 = Debug|Win32
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Release|x64.ActiveCfg = Release|x64
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Release|x64.Build.0 = Release|x64
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Release|x86.ActiveCfg = Release|Win32
-		{E30DF150-E158-4BAF-932A-6036DE8F9B73}.Release|x86.Build.0 = Release|Win32
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Debug|x64.ActiveCfg = Debug|x64
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Debug|x64.Build.0 = Debug|x64
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Debug|x86.ActiveCfg = Debug|Win32
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Debug|x86.Build.0 = Debug|Win32
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Release|x64.ActiveCfg = Release|x64
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Release|x64.Build.0 = Release|x64
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Release|x86.ActiveCfg = Release|Win32
+		{56DF68DA-D015-4D18-9199-2CBAA62B0DCB}.Release|x86.Build.0 = Release|Win32
 		{8DADB2AE-8359-47AD-9F26-0472E3F0FD3B}.Debug|x64.ActiveCfg = Debug|x64
 		{8DADB2AE-8359-47AD-9F26-0472E3F0FD3B}.Debug|x64.Build.0 = Debug|x64
 		{8DADB2AE-8359-47AD-9F26-0472E3F0FD3B}.Debug|x86.ActiveCfg = Debug|Win32
@@ -46,6 +46,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {10D831A7-B62C-44CF-894B-1FEAB26E3074}
+		SolutionGuid = {7650734C-4C13-4640-96D3-998F65A801B9}
 	EndGlobalSection
 EndGlobal
