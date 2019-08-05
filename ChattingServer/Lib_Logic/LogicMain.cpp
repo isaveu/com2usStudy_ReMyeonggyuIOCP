@@ -56,6 +56,10 @@ namespace lsbLogic
 		{
 			std::unique_lock<std::mutex> lock(m_PktProcLock);
 
+			// TODO: condition variable을 사용해서 produce consume 패턴을 이용한 것은 좋으나
+			// 매번 lock을 걸어야 하고, 이미 thread-safe한 queue를 사용하는 이점이 없어짐
+			// 또한, 매번 job을 추가할 때마다 notify를 보내주는 것도 낭비
+			// 단순한 sleep이 더 나을 수 있음
 			PacketInfo packetInfo;
 			m_cv.wait(lock, [&] { return m_PacketQueue.try_pop(packetInfo); });
 			lock.unlock();
@@ -133,6 +137,7 @@ namespace lsbLogic
 		PacketHeader header{ totalSize, packetId, static_cast<unsigned char>(0) };
 		m_pLogger->Write(LV::DEBUG, "%s | packet size : %u, packet id : %u, body length %u", __FUNCTION__, totalSize, packetId, bodyLength);
 		
+		// TODO: 매 실행마다 std::function 셋팅이 필요하므로 미리 세팅해주는 작업이 필요 - Init 즈음에 함수 미리 가지고 참조만 하게끔 변경하기
 		auto err = m_pNetwork->SendPacket(
 			sessionId
 			, bodyLength

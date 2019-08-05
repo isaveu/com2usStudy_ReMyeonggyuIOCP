@@ -61,12 +61,14 @@ namespace lsbLogic
 		{
 		public:
 			RoomUser() = default;
+
 			void Clear()
 			{
 				m_Index = -1;
 				m_SessionId = -1;
 				m_Id = "";
 			}
+
 			void Assign(const short index, const int sessionId, const std::string& id)
 			{
 				m_Index = index;

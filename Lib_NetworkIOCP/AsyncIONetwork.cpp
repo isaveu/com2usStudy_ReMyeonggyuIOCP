@@ -160,6 +160,7 @@ void AsyncIONetwork::UnlinkSocketToSession(const int sessionId, const NET_ERROR_
 {
 	auto pSession = m_pSessionManager->GetSessionPtr(sessionId);
 
+	// MEMO: 항상 생각 - 종료 명령이 여러 스레드에서 동시에 오는 경우 고려 (현재는 atomic.cas 구조로 무조건 하나의 스레드에서만 동작)
 	// Check this session is already closed, if not close socket
 	if (pSession->Close())
 	{
