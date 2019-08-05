@@ -102,7 +102,7 @@ namespace lsbLogic
 		auto packetId = static_cast<short>(PACKET_ID::LOGOUT_RES);
 		auto pResProto = dynamic_cast<Message*>(&resPkt);
 
-		auto [err, pUser] = m_pUserMngr->GetUser(packet.SessionId);
+		auto [err, pUser] = m_pUserMngr->GetLoginUser(packet.SessionId);
 		resPkt.set_res(static_cast<google::protobuf::int32>(err));
 
 		if (err != ERROR_CODE::NONE)
@@ -111,7 +111,7 @@ namespace lsbLogic
 			return err;
 		}
 
-		auto pRoom = std::get<1>(m_pRoomMngr->GetRoom(pUser->GetRoomIndex()));
+		auto pRoom = std::get<1>(m_pRoomMngr->GetUsedRoom(pUser->GetRoomIndex()));
 
 		if (pRoom)
 		{

@@ -3,12 +3,7 @@
 #include <windows.h>
 #include <functional>
 
-#include <google/protobuf/message.h>
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
-
 #include "AsyncIOException.h"
-
-using namespace google::protobuf;
 
 class PacketBufferConfig
 {
@@ -63,17 +58,11 @@ public:
 
 	// Write n-bytes to packet buffer
 	// and increase write pointer in packet buffer to write data at that time
-	bool Write(char* pData, Message* pMsg, int startIndex, int size, bool relocate = true)
+	std::tuple<bool, char*> Write(char* pData, int startIndex, int size, bool relocate = true)
 	{
-		// 둘 중 하나만 인자로 받아야 함
-		if (((pData == nullptr) ^ (pMsg == nullptr)) == false)
-		{
-			ThrowErrorIf(true, WSAENOBUFS, "Can not write char* and IProto at the same time");
-		}
-
 		if (size == 0)
 		{
-			return true;
+			return { true, m_pPacketData + m_WritePos };
 		}
 
 		int remainingBufferSize = m_BufferSize;
@@ -91,26 +80,19 @@ public:
 		// 이전 데이터들을 제대로 보냄처리 못하고 있거나, 최대 패킷 크기 이상의 요청이 온 것
 		if (remainingBufferSize < size)
 		{
-			return false;
+			return { false, nullptr };
 		}
-
-		if (pData)
+		auto prevWriteBufferPos = m_pPacketData + m_WritePos;
+		if (pData != nullptr)
 		{
-			// 일반 char* 타입의 패킷형태이면 메모리 카피
 			CopyMemory(m_pPacketData + m_WritePos, pData + startIndex, size);
-		}
-		else if (pMsg)
-		{
-			// 프로토콜 버프라면
-			io::ArrayOutputStream os(m_pPacketData + m_WritePos, size);
-			pMsg->SerializeToZeroCopyStream(&os);
 		}
 		m_WritePos += size;
 
 		// 커서 위치 재정의 처리 여부
 		if (relocate == false)
 		{
-			return true;
+			return { true, prevWriteBufferPos };
 		}
 
 		// 패킷이 끝 가까이 도달해서 커서를 앞으로 옮겨야 함
@@ -122,7 +104,7 @@ public:
 			// 연결을 끊기 위해 Write 작업을 실패라고 판단
 			if (m_PrevReadPos == 0)
 			{
-				return false;
+				return { false, prevWriteBufferPos };
 			}
 
 			// m_ReadPos, m_PrevReadPos는 항상 m_WrtiePos보다 앞서가지 않고
@@ -132,7 +114,7 @@ public:
 			m_WritePos = 0;
 		}
 
-		return true;
+		return { true, prevWriteBufferPos };
 	}
 
 	// Read n-bytes to destination.

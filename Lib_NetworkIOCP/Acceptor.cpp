@@ -89,3 +89,9 @@ void Acceptor::Run()
 	Acceptor::Accept();
 	m_pLogger->Write(LV::DEBUG, "Accept closed");
 }
+
+void Acceptor::Stop()
+{
+	m_IsStarted = false;
+	closesocket(m_listenSocket);
+}

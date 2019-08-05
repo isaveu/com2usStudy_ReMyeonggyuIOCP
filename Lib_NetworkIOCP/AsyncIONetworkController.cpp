@@ -5,9 +5,9 @@ NET_ERROR_CODE AsyncIONetwork::SendPacket(
 	const int sessionId
 	, const short length
 	, char* const data
-	, Message* pProto
 	, const short headerLength
-	, char* const pHeader)
+	, char* const pHeader
+	, std::function<bool(char*, int)> writeFunc = nullptr)
 {
 	m_Log->Write(LV::DEBUG, "Server request: send packet");
 	auto pSession = m_pSessionManager->GetSessionPtr(sessionId);
@@ -19,11 +19,21 @@ NET_ERROR_CODE AsyncIONetwork::SendPacket(
 	// 헤더에서 버퍼 write 에러 체크 안해도 문제가 있으면 어짜피 body에서 발생함
 	if (headerLength > 0)
 	{
-		overlappedEx->bufferMngr.Write(pHeader, nullptr, 0, headerLength, false);
+		overlappedEx->bufferMngr.Write(pHeader, 0, headerLength, false);
 	}
 
-	auto isSuccess = overlappedEx->bufferMngr.Write(data, pProto, 0, length);
-	if (isSuccess == false)
+	auto writeSuccess = false;
+	if (writeFunc == nullptr)
+	{
+		writeSuccess = std::get<0>(overlappedEx->bufferMngr.Write(data, 0, length));
+	}
+	else
+	{
+		auto writePos = std::get<1>(overlappedEx->bufferMngr.Write(nullptr, 0, length));
+		writeSuccess = writeFunc(writePos, length);
+	}
+
+	if (writeSuccess == false)
 	{
 		// 버퍼를 꽉 채울만큼 통신이 제대로 이뤄지지 않는 상황이므로 연결을 해제한다.
 		auto error = NET_ERROR_CODE::PACKET_BUFFER_FULL;

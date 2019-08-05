@@ -38,30 +38,30 @@ namespace lsbLogic
 		m_RoomIndexPool.push_back(index);
 	}
 
-	Room* RoomManager::FindRoom(const int index)
+	std::tuple<ERROR_CODE, Room*> RoomManager::FindRoom(const int index)
 	{
 		if (index < 0 || index >= m_MaxRoomNumber)
 		{
-			return nullptr;
+			return { ERROR_CODE::ROOM_INVALID_INDEX, nullptr };
 		}
 
 		if (m_RoomPool[index].IsUsed() == false)
 		{
-			return nullptr;
-		}
-
-		return &m_RoomPool[index];
-	}
-
-	std::tuple<ERROR_CODE, Room*> RoomManager::GetRoom(const int index)
-	{
-		auto pRoom = FindRoom(index);
-		
-		if (pRoom == nullptr)
-		{
 			return { ERROR_CODE::ROOM_ENTER_NOT_CREATED, nullptr };
 		}
 
-		return { ERROR_CODE::NONE, pRoom };
+		return { ERROR_CODE::NONE, &m_RoomPool[index] };
+	}
+
+	std::tuple<ERROR_CODE, Room*> RoomManager::GetUsedRoom(const int index)
+	{
+		auto [err, pRoom] = FindRoom(index);
+		
+		if (err != ERROR_CODE::NONE)
+		{
+			return { err, nullptr };
+		}
+
+		return { err, pRoom };
 	}
 }

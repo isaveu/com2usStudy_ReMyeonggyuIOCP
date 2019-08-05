@@ -42,9 +42,6 @@
     <ClInclude Include="RoomManager.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="ConnectedUserManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="LogicConfig.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -59,6 +56,9 @@
     </ClInclude>
     <ClInclude Include="Protobuf\Packet.pb.h">
       <Filter>헤더 파일\Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectedUserManager.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

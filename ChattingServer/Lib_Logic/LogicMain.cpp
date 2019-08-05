@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "../../Lib_NetworkIOCP/AsyncIONetwork.h"
 
 #include "ConnectedUserManager.h"
@@ -12,12 +14,39 @@ namespace lsbLogic
 	{
 		m_pNetwork->Start();
 		m_IsRun = true;
+
+		m_Runner = new std::thread(&LogicMain::Run, this);
+		m_ConnUsrMngrRunner = new std::thread(&LogicMain::ConnUsrMngrRun, this);
 	}
 
 	void LogicMain::Stop()
 	{
 		m_pNetwork->Stop();
 		m_IsRun = false;
+
+		PacketInfo exitSignal(PACKET_ID::SERVER_EXIT);
+		m_PacketQueue.push(exitSignal);
+		m_cv.notify_one();
+	}
+
+	void LogicMain::Join()
+	{
+		m_ConnUsrMngrRunner->join();
+		m_Runner->join();
+		m_pNetwork->Join();
+	}
+
+	void LogicMain::ConnUsrMngrRun()
+	{
+		std::chrono::seconds delay(5);
+		while (m_IsRun)
+		{
+			PacketInfo loginChk(PACKET_ID::SERVER_LOGIN_CHECK);
+			m_PacketQueue.push(loginChk);
+			m_cv.notify_one();
+
+			std::this_thread::sleep_for(delay);
+		}
 	}
 
 	void LogicMain::Run()
@@ -25,11 +54,22 @@ namespace lsbLogic
 		m_pLogger->Write(LV::TRACE, "%s | Run packet proc", __FUNCTION__);
 		while (m_IsRun)
 		{
+			std::unique_lock<std::mutex> lock(m_PktProcLock);
+
 			PacketInfo packetInfo;
-			if (m_PacketQueue.try_pop(packetInfo) == false)
+			m_cv.wait(lock, [&] { return m_PacketQueue.try_pop(packetInfo); });
+			lock.unlock();
+
+			if (packetInfo.PacketId == static_cast<short>(PACKET_ID::SERVER_LOGIN_CHECK))
 			{
 				m_pConnUserMngr->LoginCheck();
+				m_pLogger->Write(LV::DEBUG, "%s | Session login state check proc", __FUNCTION__);
 				continue;
+			}
+
+			if (packetInfo.PacketId == static_cast<short>(PACKET_ID::SERVER_EXIT))
+			{
+				break;
 			}
 
 			m_pPktProc->Process(packetInfo);
@@ -48,7 +88,7 @@ namespace lsbLogic
 			config.bufferSize,
 			PACKET_HEADER_SIZE,
 			PACKET_MAX_SIZE,
-			config.ip,
+			config.ip.c_str(),
 			config.port,
 			config.name
 		};
@@ -74,6 +114,7 @@ namespace lsbLogic
 		m_pLogger->Write(LOG_LEVEL::INFO, "%s | Init Success", __FUNCTION__);
 	}
 
+	/*
 	void LogicMain::SendMsg(const int sessionId, const short packetId, const short length, char* pData, Message* pMsg)
 	{
 		// TODO: packet header를 각 res packet에 상속시켜 사용 -> Write 두번 할 필요가 없어짐
@@ -83,6 +124,7 @@ namespace lsbLogic
 		m_pNetwork->SendPacket(sessionId, length, pData, pMsg, PACKET_HEADER_SIZE, reinterpret_cast<char*>(&header));
 		m_pLogger->Write(LV::TRACE, "%s | Send Packet", __FUNCTION__);
 	}
+	*/
 
 	void LogicMain::SendProto(const int sessionId, const short packetId, Message* pMsg)
 	{
@@ -90,8 +132,26 @@ namespace lsbLogic
 		auto totalSize = static_cast<short>(PACKET_HEADER_SIZE + bodyLength);
 		PacketHeader header{ totalSize, packetId, static_cast<unsigned char>(0) };
 		m_pLogger->Write(LV::DEBUG, "%s | packet size : %u, packet id : %u, body length %u", __FUNCTION__, totalSize, packetId, bodyLength);
-		m_pNetwork->SendPacket(sessionId, bodyLength, nullptr, pMsg, PACKET_HEADER_SIZE, reinterpret_cast<char*>(&header));
-		m_pLogger->Write(LV::TRACE, "%s | Send Proto", __FUNCTION__);
+		
+		auto err = m_pNetwork->SendPacket(
+			sessionId
+			, bodyLength
+			, nullptr
+			, PACKET_HEADER_SIZE
+			, reinterpret_cast<char*>(&header)
+			, [&pMsg](char* writePos, int bodyLength) -> bool {
+				io::ArrayOutputStream os(writePos, bodyLength);
+				return pMsg->SerializeToZeroCopyStream(&os);
+			});
+
+		if (err != NET_ERROR_CODE::NONE)
+		{
+			m_pLogger->Write(LV::ERR, "%s | Can not send packet", __FUNCTION__);
+		}
+		else
+		{
+			m_pLogger->Write(LV::TRACE, "%s | Send Proto", __FUNCTION__);
+		}
 	}
 
 	void LogicMain::ForceClose(const int sessionId)

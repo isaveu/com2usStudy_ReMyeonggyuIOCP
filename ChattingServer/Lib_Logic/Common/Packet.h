@@ -10,6 +10,10 @@ namespace lsbLogic
 	struct PacketInfo
 	{
 		PacketInfo() = default;
+		PacketInfo(PACKET_ID packetId)
+		{
+			PacketId = static_cast<short>(packetId);
+		}
 		int SessionId = -1;
 		short PacketId = -1;
 		short PacketBodySize = 0;

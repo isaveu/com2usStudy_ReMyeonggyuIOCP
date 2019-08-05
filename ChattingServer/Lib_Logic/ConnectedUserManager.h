@@ -113,8 +113,8 @@ namespace lsbLogic
 		}
 
 	private:
-		ILog* m_Log;
-		INetworkController* m_pController;
+		ILog* m_Log = nullptr;
+		INetworkController* m_pController = nullptr;
 
 		std::vector<ConnectedUser> ConnectedUserList;
 

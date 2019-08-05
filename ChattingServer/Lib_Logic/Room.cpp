@@ -8,6 +8,12 @@ namespace lsbLogic
 	{
 		m_Index = index;
 		m_MaxUserCount = maxUserCount;
+
+		m_RoomUserList.assign(maxUserCount, RoomUser());
+		for (short i = 0; i < maxUserCount; i++)
+		{
+			m_RoomUserIdPool.push_back(i);
+		}
 	}
 
 	void Room::SetHandler(LogicMain* pLogicMain, Log* pLogger)
@@ -21,7 +27,7 @@ namespace lsbLogic
 		m_IsUsed = false;
 		// m_Title = L"";
 		m_Title = "";
-		m_UserList.clear();
+		// m_UserList.clear();
 	}
 
 	short Room::GetIndex() 
@@ -47,7 +53,8 @@ namespace lsbLogic
 
 	short Room::GetUserCount() 
 	{
-		return static_cast<short>(m_UserList.size());
+		// return static_cast<short>(m_UserList.size());
+		return m_MaxUserCount - static_cast<short>(m_RoomUserIdPool.size());
 	}
 
 	// ERROR_CODE Room::CreateRoom(const wchar_t* pRoomTitle)
@@ -64,19 +71,33 @@ namespace lsbLogic
 		return ERROR_CODE::NONE;
 	}
 
-	ERROR_CODE Room::EnterUser(User* pUser)
+	// ERROR_CODE Room::EnterUser(User* pUser)
+	ERROR_CODE Room::EnterUser(const short index, const int sessionId, const std::string& id)
 	{
 		if (m_IsUsed == false)
 		{
 			return ERROR_CODE::ROOM_ENTER_NOT_CREATED;
 		}
 
-		if (m_UserList.size() == m_MaxUserCount)
+		// if (m_UserList.size() == m_MaxUserCount)
+		if (m_RoomUserIdPool.empty())
 		{
 			return ERROR_CODE::ROOM_ENTER_MEMBER_FULL;
 		}
 
-		m_UserList.insert({ pUser->GetIndex(), pUser });
+		auto it = find_if(m_RoomUserList.begin(), m_RoomUserList.end(),
+			[&sessionId](RoomUser& user) { return user.m_SessionId == sessionId; });
+		if (it != m_RoomUserList.end())
+		{
+			return ERROR_CODE::ROOM_ENTER_DUPLICATE_SESSION;
+		}
+
+		// m_UserList.insert({ pUser->GetIndex(), pUser });
+		auto roomUserId = m_RoomUserIdPool.front();
+		m_RoomUserIdPool.pop_front();
+
+		m_RoomUserList.at(roomUserId).Assign(index, sessionId, id);
+
 		return ERROR_CODE::NONE;
 	}
 
@@ -87,17 +108,25 @@ namespace lsbLogic
 			return ERROR_CODE::ROOM_ENTER_NOT_CREATED;
 		}
 
-		auto iter = m_UserList.find(userIndex);
-		if (iter == m_UserList.end())
+		// auto iter = m_UserList.find(userIndex);
+		// if (iter == m_UserList.end())
+		auto it = find_if(m_RoomUserList.begin(), m_RoomUserList.end(),
+			[&userIndex](RoomUser& user) { return user.m_Index == userIndex; });
+		if (it == m_RoomUserList.end())
 		{
 			return ERROR_CODE::ROOM_LEAVE_NOT_MEMBER;
 		}
 
-		m_UserList.erase(iter);
+		// m_UserList.erase(iter);
+		it->Clear();
+		auto RoomUserId = static_cast<short>(it - m_RoomUserList.begin());
+		m_RoomUserIdPool.push_back(RoomUserId);
+
 
 		m_pLog->Write(LOG_LEVEL::DEBUG, "%s | User(%d) leave from room (%d).", __FUNCTION__, userIndex, m_Index);
 
-		if (m_UserList.empty())
+		// if (m_UserList.empty())
+		if (m_RoomUserIdPool.size() == m_MaxUserCount)
 		{
 			Clear();
 
@@ -107,6 +136,7 @@ namespace lsbLogic
 		return ERROR_CODE::NONE;
 	}
 
+	/*
 	void Room::SendToAllUser(const short packetId, const short dataSize, char* pData, const int passUserIndex = -1)
 	{
 		for (auto [index, pUser] : m_UserList)
@@ -119,17 +149,21 @@ namespace lsbLogic
 			m_pLogicMain->SendMsg(pUser->GetSessionId(), packetId, dataSize, pData, nullptr);
 		}
 	}
+	*/
 
 	void Room::SendProtoToAllUser(const short packetId, Message* pProto, const int passUserIndex = -1)
 	{
-		for (auto [index, pUser] : m_UserList)
+		// for (auto [index, pUser] : m_UserList)
+		for (auto& roomUser : m_RoomUserList)
 		{
-			if (index == passUserIndex)
+			// if (index == passUserIndex)
+			if (roomUser.m_SessionId == -1 || roomUser.m_Index == passUserIndex)
 			{
 				continue;
 			}
 
-			m_pLogicMain->SendProto(pUser->GetSessionId(), packetId, pProto);
+			// m_pLogicMain->SendProto(pUser->GetSessionId(), packetId, pProto);
+			m_pLogicMain->SendProto(roomUser.m_SessionId, packetId, pProto);
 		}
 	}
 
@@ -154,11 +188,17 @@ namespace lsbLogic
 		lsbProto::RoomUserListNtf ntfPkt;
 
 		// pkt.UserCount = static_cast<short>(m_UserList.size());
-		for (auto [index, pUser] : m_UserList)
+		// for (auto [index, pUser] : m_UserList)
+		for (auto& roomUser : m_RoomUserList)
 		{
+			if (roomUser.m_SessionId == -1)
+			{
+				continue;
+			}
+
 			lsbProto::UserInfo* pUserProto = ntfPkt.add_user();
-			pUserProto->set_index(index);
-			pUserProto->set_id(pUser->GetId());
+			pUserProto->set_index(roomUser.m_Index);
+			pUserProto->set_id(roomUser.m_Id);
 		}
 
 		auto packetId = static_cast<short>(PACKET_ID::ROOM_USER_LIST);

@@ -3,7 +3,7 @@
 #include <tuple>
 #include <vector>
 #include <deque>
-#include <map>
+#include <unordered_map>
 
 #include "User.h"
 #include "Common/ErrorCode.h"
@@ -19,7 +19,7 @@ namespace lsbLogic
 		ERROR_CODE AddUser(const int sessionId, const char* Id);
 		ERROR_CODE RemoveUser(const int sessionId);
 
-		std::tuple<ERROR_CODE, User*> GetUser(const int sessionId) const;
+		std::tuple<ERROR_CODE, User*> GetLoginUser(const int sessionId) const;
 
 	private:
 		User* RetreiveUser();
@@ -29,7 +29,7 @@ namespace lsbLogic
 	private:
 		std::vector<User>	m_UserPool;
 		std::deque<int>		m_UserPoolIndex;
-		std::map<int, User*>	m_SessionUserDic;
-		std::map<std::string, User*>	m_IdUserDic;
+		std::unordered_map<int, User*>	m_SessionUserDic;
+		std::unordered_map<std::string, User*>	m_IdUserDic;
 	};
 }

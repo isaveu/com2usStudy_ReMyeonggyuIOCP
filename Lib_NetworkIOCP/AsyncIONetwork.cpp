@@ -67,6 +67,11 @@ void AsyncIONetwork::Stop()
 	{
 		worker->Stop();
 	}
+
+	if (INVALID_HANDLE_VALUE != m_IOCPHandle)
+	{
+		CloseHandle(m_IOCPHandle);
+	}
 }
 
 void AsyncIONetwork::Join()

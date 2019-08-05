@@ -56,7 +56,7 @@ void Worker::HandleCompletion()
 // Process IO job having error
 void Worker::DispatchError(DWORD error, LPOVERLAPPED lpOverlapped, int sessionId)
 {
-	if (error == WAIT_TIMEOUT)
+	if (error == WAIT_TIMEOUT || error == ERROR_ABANDONED_WAIT_0)
 	{
 		return;
 	}

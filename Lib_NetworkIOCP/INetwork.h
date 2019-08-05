@@ -1,15 +1,17 @@
 #pragma once
 
-#include <google/protobuf/message.h>
-
 #include "Session.h"
 #include "ErrorCode.h"
 
-using namespace google::protobuf;
-
 class INetworkController {
 public:
-	virtual NET_ERROR_CODE SendPacket(const int sessionId, const short length, char* const data, Message* pProto, const short headerLength, char* const header) = 0;
+	virtual NET_ERROR_CODE SendPacket(
+		const int sessionId
+		, const short length
+		, char* const data
+		, const short headerLength
+		, char* const header
+		, std::function<bool(char*, int)> writeFunc) = 0;
 	virtual NET_ERROR_CODE ConnectSocket(const int requestId, const char* ip, const short port) = 0;
 	virtual void DisconnectSocket(const int sessionId) = 0;
 };

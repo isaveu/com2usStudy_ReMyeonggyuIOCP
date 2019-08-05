@@ -83,7 +83,7 @@ namespace lsbLogic
 		return iter->second;
 	}
 
-	std::tuple<ERROR_CODE, User*> UserManager::GetUser(const int sessionId) const
+	std::tuple<ERROR_CODE, User*> UserManager::GetLoginUser(const int sessionId) const
 	{
 		auto pUser = FindUser(sessionId);
 

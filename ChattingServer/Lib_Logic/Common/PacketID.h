@@ -32,6 +32,9 @@ namespace lsbLogic
 		DEV_ECHO_REQ = 241,
 		DEV_ECHO_RES = 242,
 
-		MAX = 256
+		MAX = 256,
+
+		SERVER_LOGIN_CHECK = 999,
+		SERVER_EXIT = 9999,
 	};
 }

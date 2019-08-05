@@ -356,6 +356,7 @@
             this.chat.Name = "chat";
             this.chat.Size = new System.Drawing.Size(343, 29);
             this.chat.TabIndex = 21;
+            this.chat.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Chat_KeyDown);
             // 
             // curRoomNumberLabel
             // 

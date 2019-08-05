@@ -29,6 +29,7 @@ public:
 	// TODO: define destructor
 	~Acceptor() = default;
 	void Run() override;
+	void Stop() override;
 
 private:
 	void Accept();

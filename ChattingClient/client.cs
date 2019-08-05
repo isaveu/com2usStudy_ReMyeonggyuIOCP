@@ -483,6 +483,8 @@ namespace echoClient_csharp
             PostSendPacket(PACKET_ID.PACKET_ID_ROOM_CHAT_REQ, reqPkt.ToByteArray());
 
             Log.Write($"방 채팅 요청");
+
+            chat.Text = "";
         }
 
         private void BtnLogout_Click(object sender, EventArgs e)
@@ -490,6 +492,14 @@ namespace echoClient_csharp
             // No packet needed
             PostSendPacket(PACKET_ID.PACKET_ID_LOGOUT_REQ, null);
             Log.Write($"로그아웃 요청");
+        }
+
+        private void Chat_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                this.BtnChat_Click(sender, e);
+            }
         }
     }
 }

@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{CF099B26-0B37-4492-A46D-A72B27A2D92D}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>echoClient_csharp</RootNamespace>
-    <AssemblyName>echoClient_csharp</AssemblyName>
+    <RootNamespace>chattingClient</RootNamespace>
+    <AssemblyName>chattingClient</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -79,6 +79,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

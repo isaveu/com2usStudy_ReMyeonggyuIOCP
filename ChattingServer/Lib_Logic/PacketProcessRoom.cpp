@@ -100,7 +100,7 @@ namespace lsbLogic
 
 		auto packetId = static_cast<short>(PACKET_ID::ROOM_ENTER_RES);
 
-		auto [errUser, pUser] = m_pUserMngr->GetUser(packet.SessionId);
+		auto [errUser, pUser] = m_pUserMngr->GetLoginUser(packet.SessionId);
 
 		if (errUser != ERROR_CODE::NONE) {
 			resPkt.set_res(static_cast<google::protobuf::int32>(errUser));
@@ -139,7 +139,7 @@ namespace lsbLogic
 		}
 		else
 		{
-			pRoom = std::get<1>(m_pRoomMngr->GetRoom(reqPkt.roomindex()));
+			pRoom = std::get<1>(m_pRoomMngr->GetUsedRoom(reqPkt.roomindex()));
 			if (pRoom == nullptr) {
 				auto err = ERROR_CODE::ROOM_ENTER_INVALID_ROOM_INDEX;
 				resPkt.set_res(static_cast<google::protobuf::int32>(err));
@@ -152,7 +152,8 @@ namespace lsbLogic
 		}
 
 
-		auto enterRet = pRoom->EnterUser(pUser);
+		// auto enterRet = pRoom->EnterUser(pUser);
+		auto enterRet = pRoom->EnterUser(pUser->GetIndex(), pUser->GetSessionId(), pUser->GetId());
 		if (enterRet != ERROR_CODE::NONE) {
 			resPkt.set_res(static_cast<google::protobuf::int32>(enterRet));
 			m_pLogicMain->SendProto(packet.SessionId, packetId, pResProto);
@@ -228,7 +229,7 @@ namespace lsbLogic
 		auto packetId = static_cast<short>(PACKET_ID::ROOM_LEAVE_RES);
 		auto pResProto = dynamic_cast<Message*>(&resPkt);
 
-		auto [errorCode, pUser] = m_pUserMngr->GetUser(packet.SessionId);
+		auto [errorCode, pUser] = m_pUserMngr->GetLoginUser(packet.SessionId);
 
 		if (errorCode != ERROR_CODE::NONE) {
 			resPkt.set_res(static_cast<google::protobuf::int32>(errorCode));
@@ -245,7 +246,7 @@ namespace lsbLogic
 			return err;
 		}
 
-		auto [errRoom, pRoom] = m_pRoomMngr->GetRoom(pUser->GetRoomIndex());
+		auto [errRoom, pRoom] = m_pRoomMngr->GetUsedRoom(pUser->GetRoomIndex());
 		if (errRoom != ERROR_CODE::NONE) {
 			auto err = ERROR_CODE::ROOM_ENTER_INVALID_ROOM_INDEX;
 			resPkt.set_res(static_cast<google::protobuf::int32>(err));
@@ -315,7 +316,7 @@ namespace lsbLogic
 		auto packetId = static_cast<short>(PACKET_ID::ROOM_CHAT_RES);
 		auto pResPkt = dynamic_cast<Message*>(&resPkt);
 
-		auto [errUser, pUser] = m_pUserMngr->GetUser(packet.SessionId);
+		auto [errUser, pUser] = m_pUserMngr->GetLoginUser(packet.SessionId);
 
 		if (errUser != ERROR_CODE::NONE) {
 			resPkt.set_res(static_cast<google::protobuf::int32>(errUser));
@@ -330,7 +331,7 @@ namespace lsbLogic
 			return err;
 		}
 
-		auto [errRoom, pRoom] = m_pRoomMngr->GetRoom(pUser->GetRoomIndex());
+		auto [errRoom, pRoom] = m_pRoomMngr->GetUsedRoom(pUser->GetRoomIndex());
 		if (errRoom != ERROR_CODE::NONE) {
 			auto err = ERROR_CODE::ROOM_ENTER_INVALID_ROOM_INDEX;
 			resPkt.set_res(static_cast<google::protobuf::int32>(err));

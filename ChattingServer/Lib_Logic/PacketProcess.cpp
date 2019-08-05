@@ -56,11 +56,11 @@ namespace lsbLogic
 
 	ERROR_CODE PacketProcess::NtfSysCloseSession(PacketInfo packet)
 	{
-		auto pUser = std::get<1>(m_pUserMngr->GetUser(packet.SessionId));
+		auto pUser = std::get<1>(m_pUserMngr->GetLoginUser(packet.SessionId));
 
 		if (pUser)
 		{
-			auto pRoom = std::get<1>(m_pRoomMngr->GetRoom(pUser->GetRoomIndex()));
+			auto pRoom = std::get<1>(m_pRoomMngr->GetUsedRoom(pUser->GetRoomIndex()));
 
 			if (pRoom)
 			{

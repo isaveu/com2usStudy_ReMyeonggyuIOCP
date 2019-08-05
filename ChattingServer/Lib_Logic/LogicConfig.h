@@ -9,7 +9,7 @@ namespace lsbLogic
 
 		int bufferSize;
 
-		const char* ip;
+		std::string ip;
 		short port;
 		std::string name;
 
